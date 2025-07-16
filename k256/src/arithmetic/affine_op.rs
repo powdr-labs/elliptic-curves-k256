@@ -1,7 +1,7 @@
-use crate::AffinePoint;
 use crate::FieldElement;
 use core::ops::Add;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PowdrAffinePoint {
     x: FieldElement,
     y: FieldElement,
@@ -42,13 +42,39 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
     }
 }
 
+
+impl PowdrAffinePoint {
+    pub fn double(self) -> Option<PowdrAffinePoint> {
+    let x=self.x.normalize();
+    let y=self.y.normalize();
+
+    if y.is_zero().into() {
+        return None;
+    }
+
+    let num = FieldElement::from(3u64) * x.square();
+    let denom = (FieldElement::from(2u64) * y).normalize();
+    let lambda = num * denom.invert().unwrap();
+
+    let x3 = lambda.square() - FieldElement::from(2u64) * x;
+    let y3 = lambda * (x + x3.negate(3)) -y;
+
+    Some(PowdrAffinePoint {
+        x: x3.normalize(),
+        y: y3.normalize(),
+        infinity: false,
+    })
+}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::FieldBytes;
     use hex_literal::hex;
+    use sha2::digest::typenum::Double;
     #[test]
-    fn test_addition() {
+    fn test_addition_double() {
         let x1: FieldElement = FieldElement::from_bytes(
             &FieldBytes::cast_slice_from_core(&[{
                 let mut bytes = [0u8; 32];
@@ -102,6 +128,24 @@ mod tests {
         .unwrap()
         .normalize();
 
+        let x4: FieldElement = FieldElement::from_bytes(
+            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+                "33333333333333333333333333333333333333333333333333333332FFFFFF3B"
+            ))
+            .unwrap()])[0],
+        )
+        .unwrap()
+        .normalize();
+
+        let y4: FieldElement = FieldElement::from_bytes(
+            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+                "3916485F2C3D80C62048C6FD8ACBF71EED11987A55CC10ABDC4E4A25C4EC54AC"
+            ))
+            .unwrap()])[0],
+        )
+        .unwrap()
+        .normalize();
+
         let point1 = PowdrAffinePoint {
             x: x1,
             y: y1,
@@ -113,8 +157,12 @@ mod tests {
             infinity: false,
         };
 
-        let result = point1 + point2;
-        assert_eq!(result.as_ref().unwrap().x, x3);
-        assert_eq!(result.unwrap().y, y3);
+        let addition = point1 + point2.clone();
+        let double=point2.double();
+        assert_eq!(addition.as_ref().unwrap().x, x3);
+        assert_eq!(addition.unwrap().y, y3);
+
+        assert_eq!(double.as_ref().unwrap().x, x4.normalize());
+        assert_eq!(double.unwrap().y, y4.normalize());
     }
 }
