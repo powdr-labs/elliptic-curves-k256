@@ -1,7 +1,9 @@
 use crate::FieldElement;
+use crate::arithmetic::scalar::{Scalar, WideScalar};
 use core::ops::Add;
+use elliptic_curve::{ops::LinearCombination, scalar::IsHigh};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq,Default)]
 pub struct PowdrAffinePoint {
     x: FieldElement,
     y: FieldElement,
@@ -42,29 +44,51 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
     }
 }
 
-
 impl PowdrAffinePoint {
     pub fn double(self) -> Option<PowdrAffinePoint> {
-    let x=self.x.normalize();
-    let y=self.y.normalize();
+        let x = self.x.normalize();
+        let y = self.y.normalize();
 
-    if y.is_zero().into() {
-        return None;
+        if y.is_zero().into() {
+            return None;
+        }
+
+        let num = FieldElement::from(3u64) * x.square();
+        let denom = (FieldElement::from(2u64) * y).normalize();
+        let lambda = num * denom.invert().unwrap();
+
+        let x3 = lambda.square() - FieldElement::from(2u64) * x;
+        let y3 = lambda * (x + x3.negate(3)) - y;
+
+        Some(PowdrAffinePoint {
+            x: x3.normalize(),
+            y: y3.normalize(),
+            infinity: false,
+        })
     }
-
-    let num = FieldElement::from(3u64) * x.square();
-    let denom = (FieldElement::from(2u64) * y).normalize();
-    let lambda = num * denom.invert().unwrap();
-
-    let x3 = lambda.square() - FieldElement::from(2u64) * x;
-    let y3 = lambda * (x + x3.negate(3)) -y;
-
-    Some(PowdrAffinePoint {
-        x: x3.normalize(),
-        y: y3.normalize(),
-        infinity: false,
-    })
 }
+
+fn lincomb(points_and_scalars: &[(PowdrAffinePoint, Scalar); N]) -> PowdrAffinePoint {
+    let mut tables = [(LookupTable::default(), LookupTable::default()); N];
+    let mut digits = [(
+        Radix16Decomposition::<33>::default(),
+        Radix16Decomposition::<33>::default(),
+    ); N];
+
+    lincomb(points_and_scalars, &mut tables, &mut digits)
+}
+
+#[derive(Copy, Clone, Default)]
+struct LookupTable([PowdrAffinePoint; 8]);
+
+impl From<&PowdrAffinePoint> for LookupTable {
+    fn from(p: &PowdrAffinePoint) -> Self {
+        let mut points = [*p; 8];
+        for j in 0..7 {
+            points[j + 1] = (p.clone() + points[j].clone()).unwrap();
+        }
+        LookupTable(points)
+    }
 }
 
 #[cfg(test)]
@@ -158,7 +182,7 @@ mod tests {
         };
 
         let addition = point1 + point2.clone();
-        let double=point2.double();
+        let double = point2.double();
         assert_eq!(addition.as_ref().unwrap().x, x3);
         assert_eq!(addition.unwrap().y, y3);
 
