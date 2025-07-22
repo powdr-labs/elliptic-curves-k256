@@ -35,10 +35,15 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
             }
         }
 
-        let dx = (other.x - self.x).normalize();
+        let x1 = self.x.normalize();
+        let x2 = other.x.normalize();
+        let y1 = self.y.normalize();
+        let y2 = other.y.normalize();
+
+        let dx = (x2 - x1).normalize();
         let invert = dx.invert().unwrap();
 
-        let dy = other.y - self.y;
+        let dy = y2 - y1;
         let lambda = dy * invert;
 
         assert_eq!(
@@ -46,8 +51,8 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
             (invert * dx).normalize()
         );
 
-        let x3 = lambda.square() - self.x - other.x;
-        let y3 = lambda * (self.x + x3.negate(5)) - self.y;
+        let x3 = lambda.square() - x1 - x2;
+        let y3 = lambda * (x1 + x3.negate(5)) - y1;
 
         PowdrAffinePoint {
             x: x3.normalize(),
@@ -210,6 +215,7 @@ fn lincomb_pippenger(
             acc = table2.select(digit2.0[i]) + acc;
         }
     }
+
     acc
 }
 
