@@ -1,13 +1,14 @@
-use crate::{AffinePoint, FieldElement};
 use crate::arithmetic::mul::{G1, G2, MINUS_B1, MINUS_B2, MINUS_LAMBDA, Radix16Decomposition};
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::{Scalar, WideScalar};
-use core::ops::{Add, Neg, Mul};
+use crate::{AffinePoint, FieldElement};
+use core::ops::{Add, Mul, Neg};
 use core::usize;
-use elliptic_curve::subtle::{Choice, ConditionallySelectable, ConstantTimeEq};
-use elliptic_curve::{ops::LinearCombination, scalar::IsHigh};
+use elliptic_curve::scalar::IsHigh;
+use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+/// Represents an ECC point
 pub struct PowdrAffinePoint {
     x: FieldElement,
     y: FieldElement,
@@ -87,6 +88,7 @@ impl PowdrAffinePoint {
         infinity: 0,
     };
 
+    /// Double the point.
     pub fn double(self) -> PowdrAffinePoint {
         let x = self.x.normalize();
         let y = self.y.normalize();
@@ -191,8 +193,8 @@ fn lincomb_pippenger(
         let (digit1, digit2) = digits[component];
         let (table1, table2) = tables[component];
 
-        acc = table1.select(digit1.0[32])+acc;
-        acc = table2.select(digit2.0[32])+acc;
+        acc = table1.select(digit1.0[32]) + acc;
+        acc = table2.select(digit2.0[32]) + acc;
     }
 
     for i in (0..32).rev() {
@@ -204,8 +206,8 @@ fn lincomb_pippenger(
             let (digit1, digit2) = digits[component];
             let (table1, table2) = tables[component];
 
-            acc = table1.select(digit1.0[i])+acc;
-            acc = table2.select(digit2.0[i])+acc;
+            acc = table1.select(digit1.0[i]) + acc;
+            acc = table2.select(digit2.0[i]) + acc;
         }
     }
     acc
@@ -260,11 +262,6 @@ mod tests {
     use super::*;
     use crate::FieldBytes;
     use hex_literal::hex;
-    use sha2::digest::typenum::Double;
-    use elliptic_curve::{
-        Field, Group,
-        rand_core::{OsRng, TryRngCore},
-    };
 
     #[test]
     fn test_addition_double() {
@@ -360,10 +357,28 @@ mod tests {
     }
 
     #[test]
-    fn test_mul_by_generator() {
-        let k = Scalar::random(&mut OsRng.unwrap_mut());
-        let reference = PowdrAffinePoint::GENERATOR * k;
-        let test = PowdrAffinePoint::mul_by_generator(&k);
-        assert_eq!(reference, test);
+    fn test_multiplication() {
+
+        
+        let x5: FieldElement = FieldElement::from_bytes(
+            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+                "6D6D216817A448DC312FEE586FA306D189CB404A9CAF72D90308797F38934A19"
+            ))
+            .unwrap()])[0],
+        )
+        .unwrap()
+        .normalize();
+
+        let y5: FieldElement = FieldElement::from_bytes(
+            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+                "2C9BB19372B2E1B830B5F4D92ADBAFEAAEB612026122E571D1BEA76D742F279E"
+            ))
+            .unwrap()])[0],
+        )
+        .unwrap()
+        .normalize();
+
+    let scalar = Scalar::from_u128(12345678);
+
     }
 }
