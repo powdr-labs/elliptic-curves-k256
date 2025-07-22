@@ -261,6 +261,7 @@ impl LookupTable {
 mod tests {
     use super::*;
     use crate::FieldBytes;
+    use elliptic_curve::PrimeField;
     use hex_literal::hex;
 
     #[test]
@@ -358,8 +359,23 @@ mod tests {
 
     #[test]
     fn test_multiplication() {
+        let x1: FieldElement = FieldElement::from_bytes(
+            &FieldBytes::cast_slice_from_core(&[{
+                let mut bytes = [0u8; 32];
+                bytes[31] = 1;
+                bytes
+            }])[0],
+        )
+        .unwrap();
+        let y1: FieldElement = FieldElement::from_bytes(
+            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+                "4218F20AE6C646B363DB68605822FB14264CA8D2587FDD6FBC750D587E76A7EE"
+            ))
+            .unwrap()])[0],
+        )
+        .unwrap()
+        .normalize();
 
-        
         let x5: FieldElement = FieldElement::from_bytes(
             &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
                 "6D6D216817A448DC312FEE586FA306D189CB404A9CAF72D90308797F38934A19"
@@ -378,7 +394,21 @@ mod tests {
         .unwrap()
         .normalize();
 
-    let scalar = Scalar::from_u128(12345678);
+        let scalar = Scalar::from_u128(12345678);
 
+        let point1 = PowdrAffinePoint {
+            x: x1,
+            y: y1,
+            infinity: 0,
+        };
+        let point5 = PowdrAffinePoint {
+            x: x5,
+            y: y5,
+            infinity: 0,
+        };
+
+        let multiplication = point1 * scalar;
+        assert_eq!(multiplication.x, point5.x);
+        assert_eq!(multiplication.y, point5.y);
     }
 }
