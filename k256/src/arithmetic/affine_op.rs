@@ -12,9 +12,9 @@ use elliptic_curve::point::AffineCoordinates;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 /// Represents an ECC point
 pub struct PowdrAffinePoint {
-    x: FieldElement,
-    y: FieldElement,
-    infinity: u8,
+    pub x: FieldElement,
+    pub y: FieldElement,
+    pub infinity: u8,
 }
 
 impl From<AffinePoint> for PowdrAffinePoint {
@@ -54,6 +54,7 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
             }
         }
 
+        // normalization is needed here to ensure the initial magnitude is 1.
         let x1 = self.x.normalize();
         let x2 = other.x.normalize();
         let y1 = self.y.normalize();
