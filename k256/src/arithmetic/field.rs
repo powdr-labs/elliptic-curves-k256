@@ -168,9 +168,25 @@ impl FieldElement {
         x
     }
 
+    
+
     /// Returns the multiplicative inverse of self, if self is non-zero.
     /// The result has magnitude 1, but is not normalized.
     pub fn invert(&self) -> CtOption<Self> {
+        #[cfg(target_os = "zkvm")]
+        {
+            let repr = self.0.0;
+            let inv_repr = hint_k256_inverse_field_10x26(repr);
+            let inv = Self(FieldElementImpl(inv_repr));
+            let normalizes_to_zero = inv.normalizes_to_zero();
+            if !bool::from(normalizes_to_zero) {
+                // prove its the inverse
+                assert_eq!((inv * self).normalize(), Self::ONE);
+            }
+            CtOption::new(inv, !normalizes_to_zero)
+        }
+        #[cfg(not(target_os = "zkvm"))]
+        {
         // The binary representation of (p - 2) has 5 blocks of 1s, with lengths in
         // { 1, 2, 22, 223 }. Use an addition chain to calculate 2^n - 1 for each block:
         // [1], [2], 3, 6, 9, 11, [22], 44, 88, 176, 220, [223]
@@ -199,6 +215,7 @@ impl FieldElement {
             .mul(self);
 
         CtOption::new(res, !self.normalizes_to_zero())
+        }
     }
 
     /// Returns the square root of self mod p, or `None` if no square root exists.

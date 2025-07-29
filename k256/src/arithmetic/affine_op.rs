@@ -5,9 +5,9 @@ use crate::{AffinePoint, FieldElement};
 use core::ops::{Add, Mul, Neg};
 use core::usize;
 use elliptic_curve::group::prime::PrimeCurveAffine;
+use elliptic_curve::point::AffineCoordinates;
 use elliptic_curve::scalar::IsHigh;
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
-use elliptic_curve::point::AffineCoordinates;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 /// Represents an ECC point
@@ -25,11 +25,7 @@ impl From<AffinePoint> for PowdrAffinePoint {
         PowdrAffinePoint {
             x: FieldElement::from_bytes(&x_bytes).unwrap(),
             y: FieldElement::from_bytes(&y_bytes).unwrap(),
-            infinity: if point.is_identity().into() {
-                1
-            } else {
-                0
-            },
+            infinity: if point.is_identity().into() { 1 } else { 0 },
         }
     }
 }
@@ -47,7 +43,7 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
 
         if other.x == self.x {
             if self.y == other.y {
-                return self.double(); 
+                return self.double();
             } else {
                 //  x1 == x2 but y1 != y2 → vertical line → point at infinity
                 return PowdrAffinePoint::IDENTITY;
@@ -287,13 +283,13 @@ impl LookupTable {
 mod tests {
     use super::*;
     use crate::FieldBytes;
-    use elliptic_curve::PrimeField;
-    use hex_literal::hex;
     use crate::arithmetic::{ProjectivePoint, Scalar};
+    use elliptic_curve::PrimeField;
     use elliptic_curve::{
         Field, Group,
         rand_core::{OsRng, TryRngCore},
     };
+    use hex_literal::hex;
 
     #[test]
     fn test_addition_double() {
@@ -445,8 +441,10 @@ mod tests {
 
     #[test]
     fn test_lincomb() {
-        let x = PowdrAffinePoint::from(ProjectivePoint::random(&mut OsRng.unwrap_mut()).to_affine());
-        let y = PowdrAffinePoint::from(ProjectivePoint::random(&mut OsRng.unwrap_mut()).to_affine());
+        let x =
+            PowdrAffinePoint::from(ProjectivePoint::random(&mut OsRng.unwrap_mut()).to_affine());
+        let y =
+            PowdrAffinePoint::from(ProjectivePoint::random(&mut OsRng.unwrap_mut()).to_affine());
         let k = Scalar::random(&mut OsRng.unwrap_mut());
         let l = Scalar::random(&mut OsRng.unwrap_mut());
 
