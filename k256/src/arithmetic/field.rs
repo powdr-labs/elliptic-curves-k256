@@ -171,19 +171,19 @@ impl FieldElement {
     /// Returns the multiplicative inverse of self, if self is non-zero.
     /// The result has magnitude 1, but is not normalized.
     pub fn invert(&self) -> CtOption<Self> {
-        #[cfg(target_os = "zkvm")]
-        {
-            let bytes = self.to_bytes();
-            let inv_bytes = powdr_openvm_hints_guest::hint_k256_inverse_field(bytes.as_slice());
-            let inv = Self::from_bytes(&inv_bytes.try_into().unwrap()).unwrap();
-            if inv != Self::ZERO {
-                // prove its the inverse
-                assert_eq!((inv * self).normalize(), Self::ONE);
-            }
-            CtOption::new(inv, !self.normalizes_to_zero())
-        }
-        #[cfg(not(target_os = "zkvm"))]
-        {
+        // #[cfg(target_os = "zkvm")]
+        // {
+        //     let bytes = self.to_bytes();
+        //     let inv_bytes = powdr_openvm_hints_guest::hint_k256_inverse_field(bytes.as_slice());
+        //     let inv = Self::from_bytes(&inv_bytes.try_into().unwrap()).unwrap();
+        //     if inv != Self::ZERO {
+        //         // prove its the inverse
+        //         assert_eq!((inv * self).normalize(), Self::ONE);
+        //     }
+        //     CtOption::new(inv, !self.normalizes_to_zero())
+        // }
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
             // The binary representation of (p - 2) has 5 blocks of 1s, with lengths in
             // { 1, 2, 22, 223 }. Use an addition chain to calculate 2^n - 1 for each block:
             // [1], [2], 3, 6, 9, 11, [22], 44, 88, 176, 220, [223]
@@ -212,26 +212,26 @@ impl FieldElement {
                 .mul(self);
 
             CtOption::new(res, !self.normalizes_to_zero())
-        }
+        //}
     }
 
     /// Returns the square root of self mod p, or `None` if no square root exists.
     /// The result has magnitude 1, but is not normalized.
     pub fn sqrt(&self) -> CtOption<Self> {
-        #[cfg(target_os = "zkvm")]
-        {
-            let repr = self.0.0;
-            let res = powdr_openvm_hints_guest::hint_k256_sqrt_field_10x26(repr);
-            if let Some(sqrt) = res {
-                let sqrt = Self(FieldElementImpl(sqrt));
-                assert_eq!((sqrt * sqrt).normalize(), self.normalize());
-                CtOption::new(sqrt, Choice::from(1))
-            } else {
-                CtOption::new(Self::ZERO, Choice::from(0))
-            }
-        }
-        #[cfg(not(target_os = "zkvm"))]
-        {
+        // #[cfg(target_os = "zkvm")]
+        // {
+        //     let repr = self.0.0;
+        //     let res = powdr_openvm_hints_guest::hint_k256_sqrt_field_10x26(repr);
+        //     if let Some(sqrt) = res {
+        //         let sqrt = Self(FieldElementImpl(sqrt));
+        //         assert_eq!((sqrt * sqrt).normalize(), self.normalize());
+        //         CtOption::new(sqrt, Choice::from(1))
+        //     } else {
+        //         CtOption::new(Self::ZERO, Choice::from(0))
+        //     }
+        // }
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
             /*
             Given that p is congruent to 3 mod 4, we can compute the square root of
             a mod p as the (p+1)/4'th power of a.
@@ -266,7 +266,7 @@ impl FieldElement {
 
             // Only return Some if it's the square root.
             CtOption::new(res, is_root)
-        }
+        //}
     }
 
     /// Get the field modulus as a [`BigUint`].
