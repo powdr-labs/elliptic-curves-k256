@@ -169,7 +169,7 @@ fn mul(x: &PowdrAffinePoint, k: &Scalar) -> PowdrAffinePoint {
     lincomb(&[(*x, *k)])
 }
 
-fn lincomb<const N: usize>(
+pub fn lincomb<const N: usize>(
     points_and_scalars: &[(PowdrAffinePoint, Scalar); N],
 ) -> PowdrAffinePoint {
     let mut tables = [(LookupTable::default(), LookupTable::default()); N];
@@ -281,6 +281,8 @@ impl LookupTable {
 
 #[cfg(test)]
 mod tests {
+    use std::println;
+
     use super::*;
     use crate::FieldBytes;
     use crate::arithmetic::{ProjectivePoint, Scalar};
@@ -447,6 +449,11 @@ mod tests {
             PowdrAffinePoint::from(ProjectivePoint::random(&mut OsRng.unwrap_mut()).to_affine());
         let k = Scalar::random(&mut OsRng.unwrap_mut());
         let l = Scalar::random(&mut OsRng.unwrap_mut());
+
+        println!("k: {:?}", k);
+        println!("x: {:?}", x);
+        println!("y: {:?}", y);
+        println!("l: {:?}", l);
 
         let reference = x * k + y * l;
         let test = lincomb(&[(x, k), (y, l)]);
