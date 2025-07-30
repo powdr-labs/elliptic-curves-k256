@@ -150,7 +150,7 @@ impl PowdrAffinePoint {
         PowdrAffinePoint {
             x: FieldElement::conditional_select(&a.x, &b.x, choice),
             y: FieldElement::conditional_select(&a.y, &b.y, choice),
-            infinity: choice.unwrap_u8(),
+            infinity: a.infinity,
         }
     }
 
