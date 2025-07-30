@@ -173,14 +173,15 @@ impl FieldElement {
     pub fn invert(&self) -> CtOption<Self> {
         #[cfg(target_os = "zkvm")]
         {
-            let bytes = self.to_bytes();
-            let inv_bytes = powdr_openvm_hints_guest::hint_k256_inverse_field(bytes.as_slice());
-            let inv = Self::from_bytes(&inv_bytes.try_into().unwrap()).unwrap();
-            if inv != Self::ZERO {
+            let repr = self.0.0;
+            let inv_repr = hint_k256_inverse_field_10x26(repr);
+            let inv = Self(FieldElementImpl(inv_repr));
+            let normalizes_to_zero = inv.normalizes_to_zero();
+            if !bool::from(normalizes_to_zero) {
                 // prove its the inverse
                 assert_eq!((inv * self).normalize(), Self::ONE);
             }
-            CtOption::new(inv, !self.normalizes_to_zero())
+            CtOption::new(inv, !normalizes_to_zero)
         }
         #[cfg(not(target_os = "zkvm"))]
         {
