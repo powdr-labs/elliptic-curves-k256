@@ -12,8 +12,11 @@ use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 /// Represents an ECC point
 pub struct PowdrAffinePoint {
+    /// X coordinate of the point
     pub x: FieldElement,
+    /// Y coordinate of the point
     pub y: FieldElement,
+    /// Whether the point is at infinity (1 = yes, 0 = no)
     pub infinity: u8,
 }
 
@@ -51,23 +54,16 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
         }
 
         // normalization is needed here to ensure the initial magnitude is 1.
-        let x1 = self.x.normalize();
-        let x2 = other.x.normalize();
-        let y1 = self.y.normalize();
-        let y2 = other.y.normalize();
+        let x1 = self.x.normalize_weak();
+        let y1 = self.y.normalize_weak();
 
-        let dx = (x2 - x1).normalize();
+        let dx = other.x - x1;
         let invert = dx.invert().unwrap();
 
-        let dy = y2 - y1;
+        let dy = other.y - y1;
         let lambda = dy * invert;
 
-        assert_eq!(
-            FieldElement::from_u64(1).normalize(),
-            (invert * dx).normalize()
-        );
-
-        let x3 = lambda.square() - x1 - x2;
+        let x3 = lambda.square() - x1 - other.x;
         let y3 = lambda * (x1 + x3.negate(5)) - y1;
 
         PowdrAffinePoint {
@@ -111,19 +107,16 @@ impl PowdrAffinePoint {
 
     /// Double the point.
     pub fn double(self) -> PowdrAffinePoint {
-        let x = self.x.normalize();
-        let y = self.y.normalize();
-
-        if y.is_zero().into() {
+        if self.y.normalizes_to_zero().into() {
             return PowdrAffinePoint::IDENTITY;
         }
 
-        let num = FieldElement::from(3u64) * x.square();
-        let denom = (FieldElement::from(2u64) * y).normalize();
+        let num = FieldElement::from(3u64) * self.x.square();
+        let denom = FieldElement::from(2u64) * self.y;
         let lambda = num * denom.invert().unwrap();
 
-        let x3 = lambda.square() - FieldElement::from(2u64) * x;
-        let y3 = lambda * (x + x3.negate(3)) - y;
+        let x3 = lambda.square() - FieldElement::from(2u64) * self.x;
+        let y3 = lambda * (self.x + x3.negate(3)) - self.y;
 
         PowdrAffinePoint {
             x: x3.normalize(),
@@ -135,7 +128,7 @@ impl PowdrAffinePoint {
     fn neg(&self) -> Self {
         PowdrAffinePoint {
             x: self.x,
-            y: self.y.negate(1).normalize_weak(),
+            y: self.y.negate(1).normalize(),
             infinity: self.infinity,
         }
     }
@@ -169,6 +162,7 @@ fn mul(x: &PowdrAffinePoint, k: &Scalar) -> PowdrAffinePoint {
     lincomb(&[(*x, *k)])
 }
 
+/// multi scalar multiplication using Pippenger's algorithm
 pub fn lincomb<const N: usize>(
     points_and_scalars: &[(PowdrAffinePoint, Scalar); N],
 ) -> PowdrAffinePoint {
@@ -442,21 +436,22 @@ mod tests {
     }
 
     #[test]
+    /// Tests the multi scalar multiplication function using functions from projective points.
     fn test_lincomb() {
-        let x =
-            PowdrAffinePoint::from(ProjectivePoint::random(&mut OsRng.unwrap_mut()).to_affine());
-        let y =
-            PowdrAffinePoint::from(ProjectivePoint::random(&mut OsRng.unwrap_mut()).to_affine());
+        let a_projective = ProjectivePoint::random(&mut OsRng.unwrap_mut());
+        let b_projective = ProjectivePoint::random(&mut OsRng.unwrap_mut());
+
         let k = Scalar::random(&mut OsRng.unwrap_mut());
         let l = Scalar::random(&mut OsRng.unwrap_mut());
 
-        println!("k: {:?}", k);
-        println!("x: {:?}", x);
-        println!("y: {:?}", y);
-        println!("l: {:?}", l);
+        let a_powdr_affine = PowdrAffinePoint::from(a_projective.to_affine());
 
-        let reference = x * k + y * l;
-        let test = lincomb(&[(x, k), (y, l)]);
-        assert_eq!(reference, test);
+        let b_powdr_affine = PowdrAffinePoint::from(b_projective.to_affine());
+
+        let result_affine = lincomb(&[(a_powdr_affine, k), (b_powdr_affine, l)]);
+        let result_projective = a_projective * k + b_projective * l;
+
+        assert_eq!(result_affine.x, result_projective.to_affine().x);
+        assert_eq!(result_affine.y, result_projective.to_affine().y);
     }
 }
