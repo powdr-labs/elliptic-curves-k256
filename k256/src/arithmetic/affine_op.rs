@@ -3,74 +3,60 @@ use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::{Scalar, WideScalar};
 use crate::{AffinePoint, FieldElement};
 use core::ops::{Add, Mul, Neg};
-use core::usize;
-use elliptic_curve::group::prime::PrimeCurveAffine;
-use elliptic_curve::point::AffineCoordinates;
 use elliptic_curve::scalar::IsHigh;
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 /// Represents an ECC point
-pub struct PowdrAffinePoint {
-    /// X coordinate of the point
-    pub x: FieldElement,
-    /// Y coordinate of the point
-    pub y: FieldElement,
-    /// Whether the point is at infinity (1 = yes, 0 = no)
-    pub infinity: u8,
-}
+// pub struct PowdrAffinePoint {
+//     /// X coordinate of the point
+//     pub x: FieldElement,
+//     /// Y coordinate of the point
+//     pub y: FieldElement,
+//     /// Whether the point is at infinity (1 = yes, 0 = no)
+//     pub infinity: u8,
+// }
 
-impl From<AffinePoint> for PowdrAffinePoint {
-    fn from(point: AffinePoint) -> Self {
-        let x_bytes = point.x();
-        let y_bytes = point.y();
-
-        PowdrAffinePoint {
-            x: FieldElement::from_bytes(&x_bytes).unwrap(),
-            y: FieldElement::from_bytes(&y_bytes).unwrap(),
-            infinity: if point.is_identity().into() { 1 } else { 0 },
-        }
-    }
-}
+pub struct PowdrAffinePoint(pub AffinePoint);
 
 impl Add<PowdrAffinePoint> for PowdrAffinePoint {
     type Output = PowdrAffinePoint;
 
     fn add(self, other: PowdrAffinePoint) -> PowdrAffinePoint {
-        if self.infinity != 0 {
+        if self.0.infinity != 0 {
             return other;
         }
-        if other.infinity != 0 {
+        if other.0.infinity != 0 {
             return self;
         }
 
-        if other.x == self.x {
-            if self.y == other.y {
+        if other.0.x == self.0.x {
+            if self.0.y == other.0.y {
                 return self.double();
             } else {
                 //  x1 == x2 but y1 != y2 → vertical line → point at infinity
-                return PowdrAffinePoint::IDENTITY;
+                return PowdrAffinePoint(AffinePoint::IDENTITY);
             }
         }
 
         // normalization is needed here to ensure the initial magnitude is 1.
-        let x1 = self.x.normalize_weak();
-        let y1 = self.y.normalize_weak();
+        let x1 = self.0.x.normalize_weak();
+        let y1 = self.0.y.normalize_weak();
 
-        let dx = other.x - x1;
+        let dx = other.0.x - x1;
         let invert = dx.invert().unwrap();
 
-        let dy = other.y - y1;
+        let dy = other.0.y - y1;
         let lambda = dy * invert;
 
-        let x3 = lambda.square() - x1 - other.x;
+        let x3 = lambda.square() - x1 - other.0.x;
         let y3 = lambda * (x1 + x3.negate(5)) - y1;
 
-        PowdrAffinePoint {
+        PowdrAffinePoint(AffinePoint {
             x: x3.normalize_weak(),
             y: y3.normalize_weak(),
             infinity: 0,
-        }
+        })
     }
 }
 
@@ -91,77 +77,58 @@ impl Mul<Scalar> for PowdrAffinePoint {
 }
 
 impl PowdrAffinePoint {
-    /// Additive identity of the group: the point at infinity.
-    pub const IDENTITY: Self = Self {
-        x: FieldElement::ZERO,
-        y: FieldElement::ZERO,
-        infinity: 1,
-    };
-
-    /// Base point of secp256k1.
-    pub const GENERATOR: Self = Self {
-        x: AffinePoint::GENERATOR.x,
-        y: AffinePoint::GENERATOR.y,
-        infinity: 0,
-    };
-
+    /// Ruduces the coordinates of the point to their canonical form.
     pub fn normalize_coordinates(&self) -> Self {
-        PowdrAffinePoint {
-            x: self.x.normalize(),
-            y: self.y.normalize(),
-            infinity: self.infinity,
-        }
+        PowdrAffinePoint(AffinePoint {
+            x: self.0.x.normalize(),
+            y: self.0.y.normalize(),
+            infinity: self.0.infinity,
+        })
     }
 
     /// Double the point.
     pub fn double(self) -> PowdrAffinePoint {
-        if self.y.normalizes_to_zero().into() {
-            return PowdrAffinePoint::IDENTITY;
+        if self.0.y.normalizes_to_zero().into() {
+            return PowdrAffinePoint(AffinePoint::IDENTITY);
         }
 
-        let num = FieldElement::from(3u64) * self.x.square();
-        let denom = FieldElement::from(2u64) * self.y;
+        let num = FieldElement::from(3u64) * self.0.x.square();
+        let denom = FieldElement::from(2u64) * self.0.y;
         let lambda = num * denom.invert().unwrap();
 
-        let x3 = lambda.square() - FieldElement::from(2u64) * self.x;
-        let y3 = lambda * (self.x + x3.negate(3)) - self.y;
+        let x3 = lambda.square() - FieldElement::from(2u64) * self.0.x;
+        let y3 = lambda * (self.0.x + x3.negate(3)) - self.0.y;
 
-        PowdrAffinePoint {
-            x: x3.normalize(),
-            y: y3.normalize(),
+        PowdrAffinePoint(AffinePoint {
+            x: x3.normalize_weak(),
+            y: y3.normalize_weak(),
             infinity: 0,
-        }
+        })
     }
 
     fn neg(&self) -> Self {
-        PowdrAffinePoint {
-            x: self.x,
-            y: self.y.negate(1).normalize(),
-            infinity: self.infinity,
-        }
-    }
-
-    /// Calculates `k * G`, where `G` is the generator, using precomputed tables.
-    // TODO: can use precomputed tables for better performance
-    pub(super) fn mul_by_generator(k: &Scalar) -> PowdrAffinePoint {
-        PowdrAffinePoint::GENERATOR * *k
+        PowdrAffinePoint(AffinePoint {
+            x: self.0.x,
+            y: self.0.y.negate(1).normalize(),
+            infinity: self.0.infinity,
+        })
     }
 
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        PowdrAffinePoint {
-            x: FieldElement::conditional_select(&a.x, &b.x, choice),
-            y: FieldElement::conditional_select(&a.y, &b.y, choice),
-            infinity: a.infinity,
-        }
+        PowdrAffinePoint(AffinePoint {
+            x: FieldElement::conditional_select(&a.0.x, &b.0.x, choice),
+            y: FieldElement::conditional_select(&a.0.y, &b.0.y, choice),
+            infinity: a.0.infinity,
+        })
     }
 
     /// Calculates SECP256k1 endomorphism: `self * lambda`.
     pub fn endomorphism(&self) -> Self {
-        Self {
-            x: self.x * &ENDOMORPHISM_BETA,
-            y: self.y,
-            infinity: self.infinity,
-        }
+        Self(AffinePoint {
+            x: self.0.x * ENDOMORPHISM_BETA,
+            y: self.0.y,
+            infinity: self.0.infinity,
+        })
     }
 }
 
@@ -211,7 +178,7 @@ fn lincomb_pippenger(
         )
     });
 
-    let mut acc = PowdrAffinePoint::IDENTITY;
+    let mut acc = PowdrAffinePoint(AffinePoint::IDENTITY);
     for component in 0..xks.len() {
         let (digit1, digit2) = digits[component];
         let (table1, table2) = tables[component];
@@ -255,7 +222,7 @@ impl From<&PowdrAffinePoint> for LookupTable {
     fn from(p: &PowdrAffinePoint) -> Self {
         let mut points = [*p; 8];
         for j in 0..7 {
-            points[j + 1] = p.clone() + points[j].clone();
+            points[j + 1] = *p + points[j];
         }
         LookupTable(points)
     }
@@ -267,13 +234,13 @@ impl LookupTable {
         debug_assert!((-8..=8).contains(&x));
 
         if x == 0 {
-            PowdrAffinePoint::IDENTITY
+            PowdrAffinePoint(AffinePoint::IDENTITY)
         } else {
-            let abs = x.abs() as usize;
+            let abs = x.unsigned_abs() as usize;
             let mut point = self.0[abs - 1];
 
             if x < 0 {
-                point.y = -point.y;
+                point.0.y = -point.0.y;
             }
 
             point
@@ -283,7 +250,6 @@ impl LookupTable {
 
 #[cfg(test)]
 mod tests {
-    use std::println;
 
     use super::*;
     use crate::FieldBytes;
@@ -306,10 +272,9 @@ mod tests {
         )
         .unwrap();
         let y1: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "4218F20AE6C646B363DB68605822FB14264CA8D2587FDD6FBC750D587E76A7EE"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
@@ -324,68 +289,63 @@ mod tests {
         .unwrap();
 
         let y2: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "990418D84D45F61F60A56728F5A10317BDB3A05BDA4425E3AEE079F8A847A8D1"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
         let x3: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "F23A2D865C24C99CC9E7B99BD907FB93EBD6CCCE106BCCCB0082ACF8315E67BE"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
         let y3: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "791DFC78B49C9B5882867776F18BA7883ED0BAE1C0A856D26D41D38FB47345B4"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
         let x4: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "33333333333333333333333333333333333333333333333333333332FFFFFF3B"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
         let y4: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "3916485F2C3D80C62048C6FD8ACBF71EED11987A55CC10ABDC4E4A25C4EC54AC"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
-        let point1 = PowdrAffinePoint {
+        let point1 = PowdrAffinePoint(AffinePoint {
             x: x1,
             y: y1,
             infinity: 0,
-        };
-        let point2 = PowdrAffinePoint {
+        });
+        let point2 = PowdrAffinePoint(AffinePoint {
             x: x2,
             y: y2,
             infinity: 0,
-        };
+        });
 
-        let addition = (point1 + point2.clone()).normalize_coordinates();
+        let addition = (point1 + point2).normalize_coordinates();
         let double = point2.double().normalize_coordinates();
-        assert_eq!(addition.x, x3);
-        assert_eq!(addition.y, y3);
+        assert_eq!(addition.0.x, x3);
+        assert_eq!(addition.0.y, y3);
 
-        assert_eq!(double.x, x4.normalize());
-        assert_eq!(double.y, y4.normalize());
+        assert_eq!(double.0.x, x4.normalize());
+        assert_eq!(double.0.y, y4.normalize());
     }
 
     #[test]
@@ -399,48 +359,45 @@ mod tests {
         )
         .unwrap();
         let y1: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "4218F20AE6C646B363DB68605822FB14264CA8D2587FDD6FBC750D587E76A7EE"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
         let x5: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "6D6D216817A448DC312FEE586FA306D189CB404A9CAF72D90308797F38934A19"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
         let y5: FieldElement = FieldElement::from_bytes(
-            &FieldBytes::cast_slice_from_core(&[<[_; 32]>::try_from(hex!(
+            &FieldBytes::cast_slice_from_core(&[hex!(
                 "2C9BB19372B2E1B830B5F4D92ADBAFEAAEB612026122E571D1BEA76D742F279E"
-            ))
-            .unwrap()])[0],
+            )])[0],
         )
         .unwrap()
         .normalize();
 
         let scalar = Scalar::from_u128(12345678);
 
-        let point1 = PowdrAffinePoint {
+        let point1 = PowdrAffinePoint(AffinePoint {
             x: x1,
             y: y1,
             infinity: 0,
-        };
-        let point5 = PowdrAffinePoint {
+        });
+        let point5 = PowdrAffinePoint(AffinePoint {
             x: x5,
             y: y5,
             infinity: 0,
-        };
+        });
 
         let multiplication = (point1 * scalar).normalize_coordinates();
-        assert_eq!(multiplication.x, point5.x);
-        assert_eq!(multiplication.y, point5.y);
+        assert_eq!(multiplication.0.x, point5.0.x);
+        assert_eq!(multiplication.0.y, point5.0.y);
     }
 
     #[test]
@@ -452,15 +409,15 @@ mod tests {
         let k = Scalar::random(&mut OsRng.unwrap_mut());
         let l = Scalar::random(&mut OsRng.unwrap_mut());
 
-        let a_powdr_affine = PowdrAffinePoint::from(a_projective.to_affine());
+        let a_powdr_affine = PowdrAffinePoint(a_projective.to_affine());
 
-        let b_powdr_affine = PowdrAffinePoint::from(b_projective.to_affine());
+        let b_powdr_affine = PowdrAffinePoint(b_projective.to_affine());
 
         let result_affine =
             lincomb(&[(a_powdr_affine, k), (b_powdr_affine, l)]).normalize_coordinates();
         let result_projective = a_projective * k + b_projective * l;
 
-        assert_eq!(result_affine.x, result_projective.to_affine().x);
-        assert_eq!(result_affine.y, result_projective.to_affine().y);
+        assert_eq!(result_affine.0.x, result_projective.to_affine().x);
+        assert_eq!(result_affine.0.y, result_projective.to_affine().y);
     }
 }
