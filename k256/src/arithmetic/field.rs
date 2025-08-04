@@ -228,6 +228,7 @@ impl FieldElement {
                 assert_eq!((sqrt * sqrt).normalize(), self.normalize());
                 CtOption::new(sqrt, Choice::from(1))
             } else {
+                assert_eq!((sqrt * sqrt).normalize(), (self * powdr_openvm_hints_guest::K256_NON_QUADRATIC_RESIDUE).normalize());
                 CtOption::new(Self::ZERO, Choice::from(0))
             }
         }
