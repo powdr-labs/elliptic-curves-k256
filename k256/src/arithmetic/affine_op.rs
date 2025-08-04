@@ -7,16 +7,7 @@ use elliptic_curve::scalar::IsHigh;
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-/// Represents an ECC point
-// pub struct PowdrAffinePoint {
-//     /// X coordinate of the point
-//     pub x: FieldElement,
-//     /// Y coordinate of the point
-//     pub y: FieldElement,
-//     /// Whether the point is at infinity (1 = yes, 0 = no)
-//     pub infinity: u8,
-// }
-
+/// A wrapper around `AffinePoint` that provides additional ecc operations on affine points.
 pub struct PowdrAffinePoint(pub AffinePoint);
 
 impl Add<PowdrAffinePoint> for PowdrAffinePoint {
