@@ -195,27 +195,12 @@ impl PrimeField for FieldElement {
 #[cfg(test)]
 mod tests {
     use super::FieldElement;
-    use crate::{FieldBytes, test_vectors::field::DBL_TEST_VECTORS};
-    use core::ops::Mul;
+    use crate::{FieldBytes, U256, test_vectors::field::DBL_TEST_VECTORS};
 
-    #[cfg(target_pointer_width = "64")]
-    use crate::U256;
     #[cfg(target_pointer_width = "64")]
     use proptest::{num::u64::ANY, prelude::*};
 
-    #[test]
-    fn zero_is_additive_identity() {
-        let zero = FieldElement::ZERO;
-        let one = FieldElement::ONE;
-        assert_eq!(zero.add(&zero), zero);
-        assert_eq!(one.add(&zero), one);
-    }
-
-    #[test]
-    fn one_is_multiplicative_identity() {
-        let one = FieldElement::ONE;
-        assert_eq!(one.mul(&one), one);
-    }
+    primefield::test_primefield!(FieldElement, U256);
 
     #[test]
     fn from_bytes() {
@@ -293,26 +278,6 @@ mod tests {
         let two = one + &one;
         let four = two.square();
         assert_eq!(two.pow_vartime(&[2, 0, 0, 0]), four);
-    }
-
-    #[test]
-    fn invert() {
-        assert!(bool::from(FieldElement::ZERO.invert().is_none()));
-
-        let one = FieldElement::ONE;
-        assert_eq!(one.invert().unwrap(), one);
-
-        let two = one + &one;
-        let inv_two = two.invert().unwrap();
-        assert_eq!(two * &inv_two, one);
-    }
-
-    #[test]
-    fn sqrt() {
-        let one = FieldElement::ONE;
-        let two = one + &one;
-        let four = two.square();
-        assert_eq!(four.sqrt().unwrap(), two);
     }
 
     #[cfg(target_pointer_width = "64")]

@@ -15,14 +15,14 @@
 mod scalar_impl;
 
 use self::scalar_impl::*;
-use crate::{FieldBytes, NistP521, U576};
+use crate::{FieldBytes, NistP521, ORDER_HEX, U576};
 use core::{
     iter::{Product, Sum},
-    ops::{Add, AddAssign, Mul, MulAssign, Neg, Shr, ShrAssign, SubAssign},
+    ops::{Add, AddAssign, Mul, MulAssign, Neg, SubAssign},
 };
 use elliptic_curve::{
     Curve as _, Error, FieldBytesEncoding, Result,
-    bigint::{self, Integer},
+    bigint::{self, Integer, NonZero},
     ff::{self, Field, PrimeField},
     ops::{Invert, Reduce, ReduceNonZero},
     rand_core::TryRngCore,
@@ -305,32 +305,6 @@ impl Scalar {
         res
     }
 
-    /// Right shifts the scalar.
-    ///
-    /// Note: not constant-time with respect to the `shift` parameter.
-    #[cfg(target_pointer_width = "32")]
-    pub const fn shr_vartime(&self, shift: u32) -> Scalar {
-        Self(fiat_p521_scalar_montgomery_domain_field_element(
-            u32x18_to_u64x9(
-                &U576::from_words(u64x9_to_u32x18(self.as_limbs()))
-                    .wrapping_shr_vartime(shift)
-                    .to_words(),
-            ),
-        ))
-    }
-
-    /// Right shifts the scalar.
-    ///
-    /// Note: not constant-time with respect to the `shift` parameter.
-    #[cfg(target_pointer_width = "64")]
-    pub const fn shr_vartime(&self, shift: u32) -> Scalar {
-        Self(fiat_p521_scalar_montgomery_domain_field_element(
-            U576::from_words(self.into_limbs())
-                .wrapping_shr_vartime(shift)
-                .to_words(),
-        ))
-    }
-
     /// Borrow the inner limbs of this scalar.
     pub(crate) const fn as_limbs(&self) -> &[u64; 9] {
         &self.0.0
@@ -551,32 +525,10 @@ impl IsHigh for Scalar {
     }
 }
 
-impl Shr<usize> for Scalar {
-    type Output = Self;
-
-    fn shr(self, rhs: usize) -> Self::Output {
-        self.shr_vartime(rhs as u32)
-    }
-}
-
-impl Shr<usize> for &Scalar {
-    type Output = Scalar;
-
-    fn shr(self, rhs: usize) -> Self::Output {
-        self.shr_vartime(rhs as u32)
-    }
-}
-
-impl ShrAssign<usize> for Scalar {
-    fn shr_assign(&mut self, rhs: usize) {
-        *self = *self >> rhs;
-    }
-}
-
 impl PrimeField for Scalar {
     type Repr = FieldBytes;
 
-    const MODULUS: &'static str = "01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409";
+    const MODULUS: &'static str = ORDER_HEX;
     const CAPACITY: u32 = 520;
     const NUM_BITS: u32 = 521;
     const TWO_INV: Self = Self::from_u64(2).invert_unchecked();
@@ -623,11 +575,8 @@ impl Reduce<U576> for Scalar {
 impl ReduceNonZero<U576> for Scalar {
     fn reduce_nonzero(w: U576) -> Self {
         const ORDER_MINUS_ONE: U576 = NistP521::ORDER.wrapping_sub(&U576::ONE);
-        let (r, underflow) = w.borrowing_sub(&ORDER_MINUS_ONE, bigint::Limb::ZERO);
-        let underflow = Choice::from((underflow.0 >> (bigint::Limb::BITS - 1)) as u8);
-        Self::from_uint_unchecked(
-            U576::conditional_select(&w, &r, !underflow).wrapping_add(&U576::ONE),
-        )
+        let r = w.rem(&NonZero::new(ORDER_MINUS_ONE).unwrap());
+        Self::from_uint_unchecked(r.wrapping_add(&U576::ONE))
     }
 
     fn reduce_nonzero_bytes(bytes: &FieldBytes) -> Self {
@@ -700,20 +649,7 @@ mod tests {
     };
     use proptest::{prelude::any, prop_compose, proptest};
 
-    /// t = (modulus - 1) >> S
-    const T: [u64; 9] = [
-        0xd76df6e3d2270c81,
-        0x0776b937113388f5,
-        0x6ff980291ee134ba,
-        0x4a30d0f077e5f2cd,
-        0xffffffffffffffff,
-        0xffffffffffffffff,
-        0xffffffffffffffff,
-        0xffffffffffffffff,
-        0x000000000000003f,
-    ];
-
-    primefield::test_primefield_constants!(Scalar, T);
+    primefield::test_primefield_constants!(Scalar, U576);
     primefield::test_field_identity!(Scalar);
     primefield::test_field_invert!(Scalar);
     //primefield::test_field_sqrt!(Scalar); // TODO(tarcieri): impl this
@@ -765,6 +701,13 @@ mod tests {
         assert_eq!(
             U576::from(Scalar::reduce_nonzero(
                 NistP521::ORDER.wrapping_add(&U576::from_u8(2))
+            )),
+            U576::from_u8(4),
+        );
+
+        assert_eq!(
+            U576::from(Scalar::reduce_nonzero(
+                NistP521::ORDER.wrapping_mul(&U576::from_u8(3))
             )),
             U576::from_u8(4),
         );
