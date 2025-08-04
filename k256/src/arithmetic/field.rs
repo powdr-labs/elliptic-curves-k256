@@ -222,8 +222,8 @@ impl FieldElement {
         #[cfg(target_os = "zkvm")]
         {
             let repr = self.0.0;
-            let res = powdr_openvm_hints_guest::hint_k256_sqrt_field_10x26(repr);
-            if let Some(sqrt) = res {
+            let (has_sqrt, sqrt) = powdr_openvm_hints_guest::hint_k256_sqrt_field_10x26(repr);
+            if has_sqrt {
                 let sqrt = Self(FieldElementImpl(sqrt));
                 assert_eq!((sqrt * sqrt).normalize(), self.normalize());
                 CtOption::new(sqrt, Choice::from(1))
