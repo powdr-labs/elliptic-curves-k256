@@ -67,8 +67,8 @@ impl Add<PowdrAffinePoint> for PowdrAffinePoint {
         let y3 = lambda * (x1 + x3.negate(5)) - y1;
 
         PowdrAffinePoint {
-            x: x3.normalize(),
-            y: y3.normalize(),
+            x: x3.normalize_weak(),
+            y: y3.normalize_weak(),
             infinity: 0,
         }
     }
@@ -104,6 +104,14 @@ impl PowdrAffinePoint {
         y: AffinePoint::GENERATOR.y,
         infinity: 0,
     };
+
+    pub fn normalize_coordinates(&self) -> Self {
+        PowdrAffinePoint {
+            x: self.x.normalize(),
+            y: self.y.normalize(),
+            infinity: self.infinity,
+        }
+    }
 
     /// Double the point.
     pub fn double(self) -> PowdrAffinePoint {
@@ -371,8 +379,8 @@ mod tests {
             infinity: 0,
         };
 
-        let addition = point1 + point2.clone();
-        let double = point2.double();
+        let addition = (point1 + point2.clone()).normalize_coordinates();
+        let double = point2.double().normalize_coordinates();
         assert_eq!(addition.x, x3);
         assert_eq!(addition.y, y3);
 
@@ -430,7 +438,7 @@ mod tests {
             infinity: 0,
         };
 
-        let multiplication = point1 * scalar;
+        let multiplication = (point1 * scalar).normalize_coordinates();
         assert_eq!(multiplication.x, point5.x);
         assert_eq!(multiplication.y, point5.y);
     }
@@ -448,7 +456,8 @@ mod tests {
 
         let b_powdr_affine = PowdrAffinePoint::from(b_projective.to_affine());
 
-        let result_affine = lincomb(&[(a_powdr_affine, k), (b_powdr_affine, l)]);
+        let result_affine =
+            lincomb(&[(a_powdr_affine, k), (b_powdr_affine, l)]).normalize_coordinates();
         let result_projective = a_projective * k + b_projective * l;
 
         assert_eq!(result_affine.x, result_projective.to_affine().x);
