@@ -105,13 +105,10 @@ use crate::ORDER;
 use crate::elliptic_curve::AffinePoint;
 use crate::elliptic_curve::PrimeField;
 use crate::elliptic_curve::bigint::CheckedAdd;
-pub use crate::elliptic_curve::bigint::U256;
 use crate::elliptic_curve::point::DecompressPoint;
 use crate::{
     Secp256k1,
-    elliptic_curve::{
-        self as ec, Curve, FieldBytes, FieldBytesEncoding, bigint::ArrayEncoding, subtle::CtOption,
-    },
+    elliptic_curve::{Curve, FieldBytes, FieldBytesEncoding},
 };
 type U = <Secp256k1 as Curve>::Uint;
 

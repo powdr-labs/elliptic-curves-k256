@@ -1,9 +1,10 @@
+use crate::AffinePoint;
+use crate::arithmetic::FieldElement;
 use crate::arithmetic::mul::{
     Endomorphism, Identity, LookupTable, Radix16Decomposition, lincomb as lincomb_pippenger,
 };
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::Scalar;
-use crate::{AffinePoint, FieldElement};
 use core::ops::{Add, AddAssign, Mul, Neg, Sub};
 use elliptic_curve::group::prime::PrimeCurveAffine;
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
