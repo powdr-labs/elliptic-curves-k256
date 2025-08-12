@@ -6,6 +6,7 @@ use crate::arithmetic::mul::{
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::Scalar;
 use core::ops::{Add, AddAssign, Mul, Neg, Sub};
+use elliptic_curve::group::prime::PrimeCurveAffine;
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -128,6 +129,10 @@ impl PowdrAffinePoint {
     /// Returns the y-coordinate of the point.
     pub fn y(&self) -> FieldElement {
         self.0.y
+    }
+    /// Returns the generator point of the curve.
+    pub fn generator() -> Self {
+        PowdrAffinePoint(AffinePoint::generator())
     }
 }
 
