@@ -67,7 +67,7 @@ impl Sub<PowdrAffinePoint> for PowdrAffinePoint {
     type Output = PowdrAffinePoint;
 
     fn sub(self, other: PowdrAffinePoint) -> PowdrAffinePoint {
-        self.add(other.neg())
+        Add::add(self, other.neg())
     }
 }
 
