@@ -102,7 +102,6 @@ pub use ecdsa_core::{
 };
 
 use crate::ORDER;
-use crate::elliptic_curve::AffinePoint;
 use crate::elliptic_curve::PrimeField;
 use crate::elliptic_curve::bigint::CheckedAdd;
 use crate::elliptic_curve::point::DecompressPoint;
@@ -172,8 +171,7 @@ impl PowdrVerifyKey for ecdsa_core::VerifyingKey<Secp256k1> {
                 u8::from(recovery_id.is_y_odd()).into(),
             )
             .into_option()
-            .ok_or_else(Error::new)
-            .unwrap(),
+            .ok_or_else(Error::new)?,
         );
 
         let r_inv = r.invert().unwrap();

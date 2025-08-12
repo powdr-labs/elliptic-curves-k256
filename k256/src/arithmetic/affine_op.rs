@@ -67,7 +67,7 @@ impl Sub<PowdrAffinePoint> for PowdrAffinePoint {
     type Output = PowdrAffinePoint;
 
     fn sub(self, other: PowdrAffinePoint) -> PowdrAffinePoint {
-        self + other.neg()
+        self.add(other.neg())
     }
 }
 
@@ -130,7 +130,7 @@ impl PowdrAffinePoint {
     pub fn y(&self) -> FieldElement {
         self.0.y
     }
-
+    /// Returns the generator point of the curve.
     pub fn generator() -> Self {
         PowdrAffinePoint(AffinePoint::generator())
     }
