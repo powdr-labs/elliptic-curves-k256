@@ -135,9 +135,9 @@ pub type VerifyingKey = ecdsa_core::VerifyingKey<Secp256k1>;
 
 #[cfg(all(feature = "ecdsa", feature = "arithmetic"))]
 /// Extension trait for [`VerifyingKey`] for zkvm
-pub trait K256VerifyExt {
+pub trait PowdrVerifyKey {
     /// Recover a [`VerifyingKey`] from a pre-hashed message and signature.
-    fn recover_from_prehash<D: hazmat::DigestAlgorithm>(
+    fn powdr_recover_from_prehash(
         prehash: &[u8],
         signature: &Signature,
         recovery_id: RecoveryId,
@@ -145,8 +145,8 @@ pub trait K256VerifyExt {
 }
 #[cfg(all(feature = "ecdsa", feature = "arithmetic"))]
 #[allow(non_snake_case)]
-impl K256VerifyExt for VerifyingKey {
-    fn recover_from_prehash<D: hazmat::DigestAlgorithm>(
+impl PowdrVerifyKey for ecdsa_core::VerifyingKey<Secp256k1> {
+    fn powdr_recover_from_prehash(
         prehash: &[u8],
         signature: &Signature,
         recovery_id: RecoveryId,
@@ -156,13 +156,12 @@ impl K256VerifyExt for VerifyingKey {
 
         let r_bytes = if recovery_id.is_x_reduced() {
             let repr: FieldBytes<Secp256k1> = r.to_repr();
-            let mut x = <U as FieldBytesEncoding<Secp256k1>>::decode_field_bytes(&repr);
+            let r_bytes = <U as FieldBytesEncoding<Secp256k1>>::decode_field_bytes(&repr)
+                .checked_add(&ORDER)
+                .into_option()
+                .ok_or_else(Error::new)?;
 
-            x = x.checked_add(&ORDER).into_option().ok_or_else(Error::new)?;
-
-            let r_bytes: FieldBytes<Secp256k1> =
-                <U as FieldBytesEncoding<Secp256k1>>::encode_field_bytes(&x);
-            r_bytes
+            <U as FieldBytesEncoding<Secp256k1>>::encode_field_bytes(&r_bytes)
         } else {
             r.to_repr()
         };
@@ -277,7 +276,7 @@ mod tests {
         use crate::{
             EncodedPoint, Secp256k1,
             ecdsa::{
-                K256VerifyExt, RecoveryId, Signature, SigningKey, VerifyingKey,
+                PowdrVerifyKey, RecoveryId, Signature, SigningKey, VerifyingKey,
                 signature::DigestVerifier,
             },
         };
@@ -333,7 +332,7 @@ mod tests {
                 let digest = Sha256::new_with_prefix(vector.msg);
                 let sig = Signature::try_from(vector.sig.as_slice()).unwrap();
                 let recid = vector.recid;
-                let pk = <VerifyingKey as K256VerifyExt>::recover_from_prehash::<Secp256k1>(
+                let pk = <ecdsa_core::VerifyingKey<Secp256k1> as PowdrVerifyKey>::powdr_recover_from_prehash(
                     &digest.finalize(),
                     &sig,
                     recid,
