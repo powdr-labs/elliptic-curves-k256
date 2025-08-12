@@ -3,7 +3,8 @@ use crate::arithmetic::mul::{
 };
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::Scalar;
-use crate::{AffinePoint, FieldElement};
+use crate::arithmetic::FieldElement;
+use crate::AffinePoint;
 use core::ops::{Add, AddAssign, Mul, Neg, Sub};
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 
