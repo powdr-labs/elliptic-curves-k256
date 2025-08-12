@@ -1,10 +1,10 @@
+use crate::AffinePoint;
+use crate::arithmetic::FieldElement;
 use crate::arithmetic::mul::{
     Endomorphism, Identity, LookupTable, Radix16Decomposition, lincomb as lincomb_pippenger,
 };
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::Scalar;
-use crate::arithmetic::FieldElement;
-use crate::AffinePoint;
 use core::ops::{Add, AddAssign, Mul, Neg, Sub};
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 
@@ -66,7 +66,7 @@ impl Sub<PowdrAffinePoint> for PowdrAffinePoint {
     type Output = PowdrAffinePoint;
 
     fn sub(self, other: PowdrAffinePoint) -> PowdrAffinePoint {
-        self + other.neg()
+        Add::add(self, other.neg())
     }
 }
 
