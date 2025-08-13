@@ -242,14 +242,20 @@ impl FieldElement {
                 }
                 CtOption::new(sqrt, Choice::from(1))
             } else {
-                assert_eq!(
-                    (sqrt * sqrt).normalize(),
-                    (*self
+                if (sqrt * sqrt).normalize()
+                    != (*self
                         * Self(FieldElementImpl(
-                            powdr_openvm_hints_guest::K256_NON_QUADRATIC_RESIDUE
+                            powdr_openvm_hints_guest::K256_NON_QUADRATIC_RESIDUE,
                         )))
                     .normalize()
-                );
+                {
+                    loop {
+                        openvm::io::println(
+                            "ERROR: Invalid square root hint for (non-quadratic residue * squared element). Entering infinite loop.",
+                        );
+                    }
+                }
+
                 CtOption::new(Self::ZERO, Choice::from(0))
             }
         }
