@@ -46,7 +46,7 @@ use crate::arithmetic::{
 };
 
 use core::ops::{Add, Mul, MulAssign, Neg, Sub};
-use elliptic_curve::ops::AddAssign;
+use elliptic_curve::{ops::AddAssign, point::Double};
 use elliptic_curve::{
     ops::LinearCombination,
     scalar::IsHigh,
@@ -341,6 +341,7 @@ where
         + ConditionallySelectable
         + Endomorphism
         + Identity
+        + Double
         + AddAssign<P>,
     for<'a> LookupTable<P>: From<&'a P>,
 {
@@ -376,7 +377,7 @@ where
 
     for i in (0..32).rev() {
         for _j in 0..4 {
-            acc = acc + acc;
+            acc = acc.double();
         }
 
         for component in 0..xks.len() {

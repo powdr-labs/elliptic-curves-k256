@@ -6,6 +6,7 @@ use crate::arithmetic::mul::{
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::Scalar;
 use core::ops::{Add, AddAssign, Mul, Neg, Sub};
+use elliptic_curve::point::Double;
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -88,38 +89,10 @@ impl PowdrAffinePoint {
         })
     }
 
-    /// Double the point.
-    pub fn double(self) -> PowdrAffinePoint {
-        if self.0.y.normalizes_to_zero().into() {
-            return PowdrAffinePoint(AffinePoint::IDENTITY);
-        }
-
-        let num = self.0.x.square().mul_single(3);
-        let denom = self.0.y.mul_single(2);
-        let lambda = num * denom.invert().unwrap();
-
-        let x3 = lambda.square() + self.0.x.mul_single(2).negate(2);
-        let y3 = lambda * (self.0.x + x3.negate(4)) - self.0.y;
-
-        PowdrAffinePoint(AffinePoint {
-            x: x3.normalize_weak(),
-            y: y3.normalize_weak(),
-            infinity: 0,
-        })
-    }
-
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
         PowdrAffinePoint(AffinePoint::conditional_select(&a.0, &b.0, choice))
     }
 
-    /// Calculates SECP256k1 endomorphism: `self * lambda`.
-    pub fn endomorphism(&self) -> Self {
-        Self(AffinePoint {
-            x: self.0.x * ENDOMORPHISM_BETA,
-            y: self.0.y,
-            infinity: self.0.infinity,
-        })
-    }
     /// Returns the x-coordinate of the point.
     pub fn x(&self) -> FieldElement {
         self.0.x
@@ -138,14 +111,41 @@ impl ConditionallySelectable for PowdrAffinePoint {
 }
 
 impl Endomorphism for PowdrAffinePoint {
+    /// Calculates SECP256k1 endomorphism: `self * lambda`.
     fn endomorphism(&self) -> Self {
-        self.endomorphism()
+        Self(AffinePoint {
+            x: self.0.x * ENDOMORPHISM_BETA,
+            y: self.0.y,
+            infinity: self.0.infinity,
+        })
     }
 }
 
 impl Identity for PowdrAffinePoint {
     fn identity() -> Self {
         PowdrAffinePoint(AffinePoint::IDENTITY)
+    }
+}
+
+impl Double for PowdrAffinePoint {
+    /// Double the point.
+    fn double(&self) -> PowdrAffinePoint {
+        if self.0.y.normalizes_to_zero().into() {
+            return PowdrAffinePoint(AffinePoint::IDENTITY);
+        }
+
+        let num = self.0.x.square().mul_single(3);
+        let denom = self.0.y.mul_single(2);
+        let lambda = num * denom.invert().unwrap();
+
+        let x3 = lambda.square() + self.0.x.mul_single(2).negate(2);
+        let y3 = lambda * (self.0.x + x3.negate(4)) - self.0.y;
+
+        PowdrAffinePoint(AffinePoint {
+            x: x3.normalize_weak(),
+            y: y3.normalize_weak(),
+            infinity: 0,
+        })
     }
 }
 

@@ -9,6 +9,7 @@ use core::{
     iter::Sum,
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
 };
+use elliptic_curve::point::Double;
 use elliptic_curve::{
     BatchNormalize, CurveGroup, Error, Result,
     group::{
@@ -58,7 +59,12 @@ impl Identity for ProjectivePoint {
         Self::IDENTITY
     }
 }
-
+impl Double for ProjectivePoint {
+    /// Double this point.
+    fn double(&self) -> Self {
+        self.double()
+    }
+}
 impl ProjectivePoint {
     /// Additive identity of the group: the point at infinity.
     pub const IDENTITY: Self = Self {
@@ -233,15 +239,6 @@ impl ProjectivePoint {
     /// Returns `self - other`.
     fn sub_mixed(&self, other: &AffinePoint) -> ProjectivePoint {
         self.add_mixed(&other.neg())
-    }
-
-    /// Calculates SECP256k1 endomorphism: `self * lambda`.
-    pub fn endomorphism(&self) -> Self {
-        Self {
-            x: self.x * &ENDOMORPHISM_BETA,
-            y: self.y,
-            z: self.z,
-        }
     }
 
     /// Check whether `self` is equal to an affine point.

@@ -179,11 +179,16 @@ impl FieldElement {
             let normalizes_to_zero = self.normalizes_to_zero();
             if !bool::from(normalizes_to_zero) {
                 // prove its the inverse
-                assert_eq!(
-                    bool::from((inv * self - Self::ONE).normalizes_to_zero()),
-                    true
-                );
+
+                if !bool::from((inv * self - Self::ONE).normalizes_to_zero()) {
+                    loop {
+                        openvm::io::println(
+                            "ERROR: inverse hint is invalid. Entering infinite loop.",
+                        );
+                    }
+                }
             }
+
             CtOption::new(inv, !normalizes_to_zero)
         }
         #[cfg(not(target_os = "zkvm"))]
@@ -228,7 +233,13 @@ impl FieldElement {
             let (has_sqrt, sqrt) = powdr_openvm_hints_guest::hint_k256_sqrt_field_10x26(repr);
             let sqrt = Self(FieldElementImpl(sqrt));
             if has_sqrt {
-                assert_eq!((sqrt * sqrt).normalize(), self.normalize());
+                if (sqrt * sqrt).normalize() != self.normalize() {
+                    loop {
+                        openvm::io::println(
+                            "ERROR: Square root hint is invalid. Entering infinite loop.",
+                        );
+                    }
+                }
                 CtOption::new(sqrt, Choice::from(1))
             } else {
                 assert_eq!(
