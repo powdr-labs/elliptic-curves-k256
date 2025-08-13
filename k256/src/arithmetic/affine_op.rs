@@ -89,10 +89,6 @@ impl PowdrAffinePoint {
         })
     }
 
-    fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        PowdrAffinePoint(AffinePoint::conditional_select(&a.0, &b.0, choice))
-    }
-
     /// Returns the x-coordinate of the point.
     pub fn x(&self) -> FieldElement {
         self.0.x
@@ -106,7 +102,7 @@ impl PowdrAffinePoint {
 
 impl ConditionallySelectable for PowdrAffinePoint {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        Self::conditional_select(a, b, choice)
+        PowdrAffinePoint(AffinePoint::conditional_select(&a.0, &b.0, choice))
     }
 }
 
