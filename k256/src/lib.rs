@@ -54,8 +54,7 @@ pub use elliptic_curve::{self, bigint::U256};
 
 #[cfg(feature = "arithmetic")]
 pub use arithmetic::{
-    affine::AffinePoint, affine_op::PowdrAffinePoint, affine_op::lincomb,
-    projective::ProjectivePoint, scalar::Scalar,
+    affine::AffinePoint, affine_op::PowdrAffinePoint, projective::ProjectivePoint, scalar::Scalar,
 };
 
 #[cfg(feature = "expose-field")]

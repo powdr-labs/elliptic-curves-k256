@@ -1,8 +1,6 @@
 use crate::AffinePoint;
 use crate::arithmetic::FieldElement;
-use crate::arithmetic::mul::{
-    Endomorphism, Identity, LookupTable, Radix16Decomposition, lincomb as lincomb_pippenger,
-};
+use crate::arithmetic::mul::{Endomorphism, Identity, LookupTable, Radix16Decomposition, lincomb};
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::Scalar;
 use core::ops::{Add, AddAssign, Mul, Neg, Sub};
@@ -98,6 +96,19 @@ impl PowdrAffinePoint {
     pub fn y(&self) -> FieldElement {
         self.0.y
     }
+
+    /// multi scalar multiplication using Pippenger's algorithm
+    pub fn lincomb<const N: usize>(
+        points_and_scalars: &[(PowdrAffinePoint, Scalar); N],
+    ) -> PowdrAffinePoint {
+        let mut tables = [(LookupTable::default(), LookupTable::default()); N];
+        let mut digits = [(
+            Radix16Decomposition::<33>::default(),
+            Radix16Decomposition::<33>::default(),
+        ); N];
+
+        lincomb::<PowdrAffinePoint>(points_and_scalars, &mut tables, &mut digits)
+    }
 }
 
 impl ConditionallySelectable for PowdrAffinePoint {
@@ -147,20 +158,7 @@ impl Double for PowdrAffinePoint {
 
 #[inline(always)]
 fn mul(x: &PowdrAffinePoint, k: &Scalar) -> PowdrAffinePoint {
-    lincomb(&[(*x, *k)])
-}
-
-/// multi scalar multiplication using Pippenger's algorithm
-pub fn lincomb<const N: usize>(
-    points_and_scalars: &[(PowdrAffinePoint, Scalar); N],
-) -> PowdrAffinePoint {
-    let mut tables = [(LookupTable::default(), LookupTable::default()); N];
-    let mut digits = [(
-        Radix16Decomposition::<33>::default(),
-        Radix16Decomposition::<33>::default(),
-    ); N];
-
-    lincomb_pippenger::<PowdrAffinePoint>(points_and_scalars, &mut tables, &mut digits)
+    PowdrAffinePoint::lincomb(&[(*x, *k)])
 }
 
 #[cfg(test)]
@@ -328,8 +326,8 @@ mod tests {
 
         let b_powdr_affine = PowdrAffinePoint(b_projective.to_affine());
 
-        let result_affine =
-            lincomb(&[(a_powdr_affine, k), (b_powdr_affine, l)]).normalize_coordinates();
+        let result_affine = PowdrAffinePoint::lincomb(&[(a_powdr_affine, k), (b_powdr_affine, l)])
+            .normalize_coordinates();
         let result_projective = a_projective * k + b_projective * l;
 
         assert_eq!(result_affine.0.x, result_projective.to_affine().x);
