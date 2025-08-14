@@ -4,9 +4,9 @@ use crate::arithmetic::mul::{Endomorphism, Identity, LookupTable, Radix16Decompo
 use crate::arithmetic::projective::ENDOMORPHISM_BETA;
 use crate::arithmetic::scalar::Scalar;
 use core::ops::{Add, AddAssign, Mul, Neg, Sub};
+use elliptic_curve::group::prime::PrimeCurveAffine;
 use elliptic_curve::point::Double;
 use elliptic_curve::subtle::{Choice, ConditionallySelectable};
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 /// A wrapper around `AffinePoint` that provides additional ecc operations on affine points.
 pub struct PowdrAffinePoint(pub AffinePoint);
@@ -97,7 +97,12 @@ impl PowdrAffinePoint {
         self.0.y
     }
 
-    /// multi scalar multiplication using Pippenger's algorithm
+    /// Returns the generator point of the curve.
+    pub fn generator() -> Self {
+        PowdrAffinePoint(AffinePoint::generator())
+    }
+
+    /// multi scalar multiplication using Straus-Shamir trick
     pub fn lincomb<const N: usize>(
         points_and_scalars: &[(PowdrAffinePoint, Scalar); N],
     ) -> PowdrAffinePoint {
