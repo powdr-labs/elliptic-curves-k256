@@ -47,11 +47,7 @@ use crate::arithmetic::{
 
 use core::ops::{Add, Mul, MulAssign, Neg, Sub};
 use elliptic_curve::{ops::AddAssign, point::Double};
-use elliptic_curve::{
-    ops::LinearCombination,
-    scalar::IsHigh,
-    subtle::{Choice, ConditionallySelectable, ConstantTimeEq},
-};
+use elliptic_curve::{ops::LinearCombination, scalar::IsHigh, subtle::ConditionallySelectable};
 
 #[cfg(all(feature = "precomputed-tables", feature = "critical-section"))]
 use once_cell::sync::Lazy as LazyLock;
@@ -81,26 +77,20 @@ where
 impl<P: Identity + ConditionallySelectable + Neg<Output = P>> LookupTable<P> {
     /// Given -8 <= x <= 8, returns x * p in constant time.
     fn select(&self, x: i8) -> P {
-        debug_assert!(x >= -8);
-        debug_assert!(x <= 8);
+        debug_assert!((-8..=8).contains(&x));
 
-        // Compute xabs = |x|
-        let xmask = x >> 7;
-        let xabs = (x + xmask) ^ xmask;
+        if x == 0 {
+            P::identity()
+        } else {
+            let abs = x.unsigned_abs() as usize;
+            let mut point = self.0[abs - 1];
 
-        // Get an array element in constant time
-        let mut t = P::identity();
-        for j in 1..9 {
-            let c = (xabs as u8).ct_eq(&(j as u8));
-            t.conditional_assign(&self.0[j - 1], c);
+            if x < 0 {
+                point = -point;
+            }
+
+            point
         }
-        // Now t == |x| * p.
-
-        let neg_mask = Choice::from((xmask & 1) as u8);
-        t.conditional_assign(&-t, neg_mask);
-        // Now t == x * p.
-
-        t
     }
 }
 
