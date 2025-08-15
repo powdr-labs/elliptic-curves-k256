@@ -96,6 +96,11 @@ impl PowdrAffinePoint {
     pub fn y(&self) -> FieldElement {
         self.0.y
     }
+    
+    /// Returns the infinity flag of the point.
+    pub fn is_identity(&self) -> bool {
+        self.0.infinity == 1
+    }
 
     /// Returns the generator point of the curve.
     pub fn generator() -> Self {
