@@ -77,7 +77,8 @@ where
 impl<P: Identity + ConditionallySelectable + Neg<Output = P>> LookupTable<P> {
     /// Given -8 <= x <= 8, returns x * p in constant time.
     fn select(&self, x: i8) -> P {
-        debug_assert!((-8..=8).contains(&x));
+        debug_assert!(x >= -8);
+        debug_assert!(x <= 8);
 
         if x == 0 {
             P::identity()
