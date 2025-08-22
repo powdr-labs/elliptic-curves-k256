@@ -158,15 +158,14 @@ use {
     crate::elliptic_curve::ops::Reduce,
     crate::elliptic_curve::point::DecompressPoint,
     crate::elliptic_curve::{
-        ops::Invert, scalar::IsHigh, subtle::CtOption, Curve, CurveArithmetic, FieldBytesEncoding,
-        PrimeField,
+        ops::Invert, scalar::IsHigh, subtle::CtOption, Curve, FieldBytesEncoding, PrimeField,
     },
     crate::ORDER,
     crate::{arithmetic::scalar::Scalar, AffinePoint, FieldBytes, PowdrAffinePoint},
     ecdsa_core::hazmat::{bits2field, SignPrimitive, VerifyPrimitive},
 };
-
-type U = <Secp256k1 as Curve>::Uint;
+#[cfg(feature = "ecdsa")]
+type Uint = <Secp256k1 as Curve>::Uint;
 
 /// ECDSA/secp256k1 signature (fixed-size)
 pub type Signature = ecdsa_core::Signature<Secp256k1>;
@@ -192,9 +191,21 @@ pub trait PowdrVerifyKey {
         recovery_id: RecoveryId,
     ) -> Result<VerifyingKey, Error>;
 }
+
 #[cfg(all(feature = "ecdsa", feature = "arithmetic"))]
 #[allow(non_snake_case)]
+/// Recovering:
+/// PK = r^(-1) * (s * R - z * G), check PK != O
+/// Verification gets a public key as input, but if the public key is computed as above,
+/// it will always satisfy the verification algorithm:
+/// Verification algorithm:
+/// z = H(m)
+/// u1 = z * s^(-1)
+/// u2 = r * s^(-1)
+/// R' = u1 * G + u2 * PK = z * s^(-1) * G + r * s^(-1) * r^(-1) * (s * R - z * G)
+/// check r == R'.x mod n
 impl PowdrVerifyKey for ecdsa_core::VerifyingKey<Secp256k1> {
+    // Like `VerifyingKey::recover_from_prehash`, but using `PowdrAffinePoint`.
     fn powdr_recover_from_prehash(
         prehash: &[u8],
         signature: &Signature,
@@ -205,26 +216,29 @@ impl PowdrVerifyKey for ecdsa_core::VerifyingKey<Secp256k1> {
             Secp256k1,
         >(prehash)?);
 
-        let r_bytes = if recovery_id.is_x_reduced() {
-            let repr: FieldBytes = r.to_repr();
-            let r_bytes = <U as FieldBytesEncoding<Secp256k1>>::decode_field_bytes(&repr)
-                .checked_add(&ORDER)
-                .unwrap();
+        let mut r_bytes = r.to_repr();
+        if recovery_id.is_x_reduced() {
+            match Option::<<Secp256k1 as Curve>::Uint>::from(
+                <Uint as FieldBytesEncoding<Secp256k1>>::decode_field_bytes(&r_bytes)
+                    .checked_add(&ORDER),
+            ) {
+                Some(restored) => {
+                    r_bytes = <Uint as FieldBytesEncoding<Secp256k1>>::encode_field_bytes(&restored)
+                }
+                // No reduction should happen here if r was reduced
+                None => return Err(Error::new()),
+            };
+        }
 
-            <U as FieldBytesEncoding<Secp256k1>>::encode_field_bytes(&r_bytes)
-        } else {
-            r.to_repr()
-        };
+        let R_affine = AffinePoint::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into());
+        if R_affine.is_none().into() {
+            return Err(Error::new());
+        }
 
-        let R = PowdrAffinePoint(
-            <Secp256k1 as CurveArithmetic>::AffinePoint::decompress(
-                &r_bytes,
-                u8::from(recovery_id.is_y_odd()).into(),
-            )
-            .unwrap(),
-        );
+        let R = PowdrAffinePoint(R_affine.unwrap());
 
-        let r_inv = r.invert();
+        // TODO: This *scalar* field inversion could be accelerated using a hint!
+        let r_inv = r.invert_vartime();
         let u1 = -(*r_inv * z);
         let u2 = *r_inv * *s;
         let pk = PowdrAffinePoint::lincomb(&[(PowdrAffinePoint::generator(), u1), (R, u2)]);
@@ -323,7 +337,7 @@ mod tests {
                 signature::DigestVerifier, PowdrVerifyKey, RecoveryId, Signature, SigningKey,
                 VerifyingKey,
             },
-            EncodedPoint, Secp256k1,
+            EncodedPoint,
         };
         use hex_literal::hex;
         use sha2::{Digest, Sha256};
@@ -377,12 +391,8 @@ mod tests {
                 let digest = Sha256::new_with_prefix(vector.msg);
                 let sig = Signature::try_from(vector.sig.as_slice()).unwrap();
                 let recid = vector.recid;
-                let pk = <ecdsa_core::VerifyingKey<Secp256k1> as PowdrVerifyKey>::powdr_recover_from_prehash(
-                    &digest.finalize(),
-                    &sig,
-                    recid,
-                )
-                .unwrap();
+                let pk = VerifyingKey::powdr_recover_from_prehash(&digest.finalize(), &sig, recid)
+                    .unwrap();
                 assert_eq!(&vector.pk[..], EncodedPoint::from(&pk).as_bytes());
             }
         }
