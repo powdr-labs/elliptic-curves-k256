@@ -154,10 +154,18 @@ use crate::Secp256k1;
 
 #[cfg(feature = "ecdsa")]
 use {
-    crate::{AffinePoint, FieldBytes, Scalar},
-    ecdsa_core::hazmat::{SignPrimitive, VerifyPrimitive},
-    elliptic_curve::{ops::Invert, scalar::IsHigh, subtle::CtOption},
+    crate::elliptic_curve::bigint::CheckedAdd,
+    crate::elliptic_curve::ops::Reduce,
+    crate::elliptic_curve::point::DecompressPoint,
+    crate::elliptic_curve::{
+        ops::Invert, scalar::IsHigh, subtle::CtOption, Curve, FieldBytesEncoding, PrimeField,
+    },
+    crate::ORDER,
+    crate::{arithmetic::scalar::Scalar, AffinePoint, FieldBytes, PowdrAffinePoint},
+    ecdsa_core::hazmat::{bits2field, SignPrimitive, VerifyPrimitive},
 };
+#[cfg(feature = "ecdsa")]
+type Uint = <Secp256k1 as Curve>::Uint;
 
 /// ECDSA/secp256k1 signature (fixed-size)
 pub type Signature = ecdsa_core::Signature<Secp256k1>;
@@ -172,6 +180,71 @@ pub type SigningKey = ecdsa_core::SigningKey<Secp256k1>;
 /// ECDSA/secp256k1 verification key (i.e. public key)
 #[cfg(feature = "ecdsa")]
 pub type VerifyingKey = ecdsa_core::VerifyingKey<Secp256k1>;
+
+#[cfg(all(feature = "ecdsa", feature = "arithmetic"))]
+/// Extension trait for [`VerifyingKey`] for zkvm
+pub trait PowdrVerifyKey {
+    /// Recover a [`VerifyingKey`] from a pre-hashed message and signature.
+    fn powdr_recover_from_prehash(
+        prehash: &[u8],
+        signature: &Signature,
+        recovery_id: RecoveryId,
+    ) -> Result<VerifyingKey, Error>;
+}
+
+#[cfg(all(feature = "ecdsa", feature = "arithmetic"))]
+#[allow(non_snake_case)]
+/// Recovering:
+/// PK = r^(-1) * (s * R - z * G), check PK != O
+/// Verification gets a public key as input, but if the public key is computed as above,
+/// it will always satisfy the verification algorithm:
+/// Verification algorithm:
+/// z = H(m)
+/// u1 = z * s^(-1)
+/// u2 = r * s^(-1)
+/// R' = u1 * G + u2 * PK = z * s^(-1) * G + r * s^(-1) * r^(-1) * (s * R - z * G)
+/// check r == R'.x mod n
+impl PowdrVerifyKey for ecdsa_core::VerifyingKey<Secp256k1> {
+    // Like `VerifyingKey::recover_from_prehash`, but using `PowdrAffinePoint`.
+    fn powdr_recover_from_prehash(
+        prehash: &[u8],
+        signature: &Signature,
+        recovery_id: RecoveryId,
+    ) -> Result<Self, Error> {
+        let (r, s) = signature.split_scalars();
+        let z = <Scalar as Reduce<<Secp256k1 as Curve>::Uint>>::reduce_bytes(&bits2field::<
+            Secp256k1,
+        >(prehash)?);
+
+        let mut r_bytes = r.to_repr();
+        if recovery_id.is_x_reduced() {
+            match Option::<<Secp256k1 as Curve>::Uint>::from(
+                <Uint as FieldBytesEncoding<Secp256k1>>::decode_field_bytes(&r_bytes)
+                    .checked_add(&ORDER),
+            ) {
+                Some(restored) => {
+                    r_bytes = <Uint as FieldBytesEncoding<Secp256k1>>::encode_field_bytes(&restored)
+                }
+                // No reduction should happen here if r was reduced
+                None => return Err(Error::new()),
+            };
+        }
+
+        let R_affine = AffinePoint::decompress(&r_bytes, u8::from(recovery_id.is_y_odd()).into());
+        if R_affine.is_none().into() {
+            return Err(Error::new());
+        }
+
+        let R = PowdrAffinePoint(R_affine.unwrap());
+
+        // TODO: This *scalar* field inversion could be accelerated using a hint!
+        let r_inv = r.invert_vartime();
+        let u1 = -(*r_inv * z);
+        let u2 = *r_inv * *s;
+        let pk = PowdrAffinePoint::lincomb(&[(PowdrAffinePoint::generator(), u1), (R, u2)]);
+        Self::from_affine(pk.0)
+    }
+}
 
 #[cfg(feature = "sha256")]
 impl hazmat::DigestPrimitive for Secp256k1 {
@@ -260,7 +333,10 @@ mod tests {
     #[cfg(feature = "sha256")]
     mod recovery {
         use crate::{
-            ecdsa::{signature::DigestVerifier, RecoveryId, Signature, SigningKey, VerifyingKey},
+            ecdsa::{
+                signature::DigestVerifier, PowdrVerifyKey, RecoveryId, Signature, SigningKey,
+                VerifyingKey,
+            },
             EncodedPoint,
         };
         use hex_literal::hex;
@@ -305,6 +381,18 @@ mod tests {
                 let sig = Signature::try_from(vector.sig.as_slice()).unwrap();
                 let recid = vector.recid;
                 let pk = VerifyingKey::recover_from_digest(digest, &sig, recid).unwrap();
+                assert_eq!(&vector.pk[..], EncodedPoint::from(&pk).as_bytes());
+            }
+        }
+
+        #[test]
+        fn public_key_recovery_zkvm() {
+            for vector in RECOVERY_TEST_VECTORS {
+                let digest = Sha256::new_with_prefix(vector.msg);
+                let sig = Signature::try_from(vector.sig.as_slice()).unwrap();
+                let recid = vector.recid;
+                let pk = VerifyingKey::powdr_recover_from_prehash(&digest.finalize(), &sig, recid)
+                    .unwrap();
                 assert_eq!(&vector.pk[..], EncodedPoint::from(&pk).as_bytes());
             }
         }
