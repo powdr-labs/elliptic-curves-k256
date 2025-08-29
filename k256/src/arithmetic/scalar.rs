@@ -506,7 +506,8 @@ impl ShrAssign<usize> for Scalar {
 
 impl ConditionallySelectable for Scalar {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        Self(U256::conditional_select(&a.0, &b.0, choice))
+        //Self(U256::conditional_select(&a.0, &b.0, choice))
+        Self(if choice.unwrap_u8() == 1 { b.0 } else { a.0 })
     }
 }
 

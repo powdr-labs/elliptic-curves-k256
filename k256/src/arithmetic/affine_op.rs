@@ -123,7 +123,8 @@ impl PowdrAffinePoint {
 
 impl ConditionallySelectable for PowdrAffinePoint {
     fn conditional_select(a: &Self, b: &Self, choice: Choice) -> Self {
-        PowdrAffinePoint(AffinePoint::conditional_select(&a.0, &b.0, choice))
+        //PowdrAffinePoint(AffinePoint::conditional_select(&a.0, &b.0, choice))
+        PowdrAffinePoint(if choice.unwrap_u8() == 1 { b.0 } else { a.0 })
     }
 }
 
