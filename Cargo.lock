@@ -783,10 +783,11 @@ checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
 
 [[package]]
 name = "openvm"
-version = "1.2.1-rc.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=dcf8ee6#dcf8ee6c5d6fd61fb8ce32c9cb836ac39e4e4fa8"
+version = "1.3.0"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=62c5d26#62c5d2682027ad7804988cb4e09e5a81338aebe8"
 dependencies = [
  "bytemuck",
+ "getrandom 0.2.8",
  "getrandom 0.3.3",
  "num-bigint",
  "openvm-custom-insn",
@@ -798,7 +799,7 @@ dependencies = [
 [[package]]
 name = "openvm-custom-insn"
 version = "0.1.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=dcf8ee6#dcf8ee6c5d6fd61fb8ce32c9cb836ac39e4e4fa8"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=62c5d26#62c5d2682027ad7804988cb4e09e5a81338aebe8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -807,8 +808,8 @@ dependencies = [
 
 [[package]]
 name = "openvm-platform"
-version = "1.2.1-rc.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=dcf8ee6#dcf8ee6c5d6fd61fb8ce32c9cb836ac39e4e4fa8"
+version = "1.3.0"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=62c5d26#62c5d2682027ad7804988cb4e09e5a81338aebe8"
 dependencies = [
  "libm",
  "openvm-custom-insn",
@@ -817,8 +818,8 @@ dependencies = [
 
 [[package]]
 name = "openvm-rv32im-guest"
-version = "1.2.1-rc.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=dcf8ee6#dcf8ee6c5d6fd61fb8ce32c9cb836ac39e4e4fa8"
+version = "1.3.0"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=62c5d26#62c5d2682027ad7804988cb4e09e5a81338aebe8"
 dependencies = [
  "openvm-custom-insn",
  "p3-field",
@@ -991,7 +992,7 @@ checksum = "7170ef9988bc169ba16dd36a7fa041e5c4cbeb6a35b76d4c03daded371eae7c0"
 [[package]]
 name = "powdr-openvm-hints-guest"
 version = "0.1.4"
-source = "git+https://github.com/powdr-labs/powdr.git?rev=3422658#3422658efd39d94ec5e5fe20752a32c18136dad8"
+source = "git+https://github.com/powdr-labs/powdr.git?branch=update-openvm-to-v1.3.0#a7dc6746c59ebed312234e76065e45fa11695e17"
 dependencies = [
  "openvm-custom-insn",
  "openvm-platform",
