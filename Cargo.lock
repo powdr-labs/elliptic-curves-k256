@@ -992,7 +992,7 @@ checksum = "7170ef9988bc169ba16dd36a7fa041e5c4cbeb6a35b76d4c03daded371eae7c0"
 [[package]]
 name = "powdr-openvm-hints-guest"
 version = "0.1.4"
-source = "git+https://github.com/powdr-labs/powdr.git?branch=update-openvm-to-v1.3.0#a7dc6746c59ebed312234e76065e45fa11695e17"
+source = "git+https://github.com/powdr-labs/powdr.git?rev=b0d4178#b0d41784779ce74da3ab3fdbdb887021d44638b8"
 dependencies = [
  "openvm-custom-insn",
  "openvm-platform",

@@ -31,7 +31,7 @@ signature = { version = "2", optional = true }
 
 [target.'cfg(target_os = "zkvm")'.dependencies]
 openvm = { git = "https://github.com/powdr-labs/openvm.git", rev="62c5d26" }
-powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", branch="update-openvm-to-v1.3.0" }
+powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev="b0d4178" }
 
 [dev-dependencies]
 blobby = "0.3"
