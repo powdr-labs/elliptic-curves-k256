@@ -784,7 +784,7 @@ checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
 [[package]]
 name = "openvm"
 version = "1.4.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=4908885#4908885fe6c2ace23cf9901c814ac96bc2bd2a20"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=2d03a6a#2d03a6a42f48707238dccec6723f6df4f6cc9adc"
 dependencies = [
  "bytemuck",
  "getrandom 0.2.8",
@@ -799,7 +799,7 @@ dependencies = [
 [[package]]
 name = "openvm-custom-insn"
 version = "0.1.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=4908885#4908885fe6c2ace23cf9901c814ac96bc2bd2a20"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=2d03a6a#2d03a6a42f48707238dccec6723f6df4f6cc9adc"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -809,7 +809,7 @@ dependencies = [
 [[package]]
 name = "openvm-platform"
 version = "1.4.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=4908885#4908885fe6c2ace23cf9901c814ac96bc2bd2a20"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=2d03a6a#2d03a6a42f48707238dccec6723f6df4f6cc9adc"
 dependencies = [
  "libm",
  "openvm-custom-insn",
@@ -819,7 +819,7 @@ dependencies = [
 [[package]]
 name = "openvm-rv32im-guest"
 version = "1.4.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=4908885#4908885fe6c2ace23cf9901c814ac96bc2bd2a20"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=2d03a6a#2d03a6a42f48707238dccec6723f6df4f6cc9adc"
 dependencies = [
  "openvm-custom-insn",
  "p3-field",
@@ -992,7 +992,7 @@ checksum = "7170ef9988bc169ba16dd36a7fa041e5c4cbeb6a35b76d4c03daded371eae7c0"
 [[package]]
 name = "powdr-openvm-hints-guest"
 version = "0.1.4"
-source = "git+https://github.com/powdr-labs/powdr.git?rev=6ff518a#6ff518a2421c38f60bc40a833d9d44f7e7bcda8a"
+source = "git+https://github.com/powdr-labs/powdr.git?rev=739f5c9#739f5c91aab0f645e0e61fbfb07909e252d29774"
 dependencies = [
  "openvm-custom-insn",
  "openvm-platform",
