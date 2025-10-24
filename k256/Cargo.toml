@@ -30,7 +30,7 @@ sha2 = { version = "0.10", optional = true, default-features = false }
 signature = { version = "2", optional = true }
 
 [target.'cfg(target_os = "zkvm")'.dependencies]
-openvm = { git = "https://github.com/powdr-labs/openvm.git", rev = "0eb629d" }
+openvm = { git = "https://github.com/powdr-labs/openvm.git", rev = "db693ab" }
 powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev = "fcd87f1" }
 
 [dev-dependencies]
