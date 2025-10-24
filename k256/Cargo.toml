@@ -31,7 +31,7 @@ signature = { version = "2", optional = true }
 
 [target.'cfg(target_os = "zkvm")'.dependencies]
 openvm = { git = "https://github.com/powdr-labs/openvm.git", rev = "db693ab" }
-powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev = "fcd87f1" }
+powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", branch = "ovm-1.4-gpu-fix-k256" }
 
 [dev-dependencies]
 blobby = "0.3"
