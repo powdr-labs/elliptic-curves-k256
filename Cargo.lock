@@ -783,8 +783,8 @@ checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
 
 [[package]]
 name = "openvm"
-version = "1.4.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=db693ab#db693abbdcd56429ec385d87e2993faba5061f54"
+version = "1.4.1"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr#60073d7908e703ba585475a285f7a4c6eadd9853"
 dependencies = [
  "bytemuck",
  "getrandom 0.2.8",
@@ -799,7 +799,7 @@ dependencies = [
 [[package]]
 name = "openvm-custom-insn"
 version = "0.1.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=db693ab#db693abbdcd56429ec385d87e2993faba5061f54"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr#60073d7908e703ba585475a285f7a4c6eadd9853"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -808,8 +808,8 @@ dependencies = [
 
 [[package]]
 name = "openvm-platform"
-version = "1.4.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=db693ab#db693abbdcd56429ec385d87e2993faba5061f54"
+version = "1.4.1"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr#60073d7908e703ba585475a285f7a4c6eadd9853"
 dependencies = [
  "libm",
  "openvm-custom-insn",
@@ -818,8 +818,8 @@ dependencies = [
 
 [[package]]
 name = "openvm-rv32im-guest"
-version = "1.4.0"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=db693ab#db693abbdcd56429ec385d87e2993faba5061f54"
+version = "1.4.1"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr#60073d7908e703ba585475a285f7a4c6eadd9853"
 dependencies = [
  "openvm-custom-insn",
  "p3-field",
@@ -992,7 +992,7 @@ checksum = "7170ef9988bc169ba16dd36a7fa041e5c4cbeb6a35b76d4c03daded371eae7c0"
 [[package]]
 name = "powdr-openvm-hints-guest"
 version = "0.1.4"
-source = "git+https://github.com/powdr-labs/powdr.git?rev=fcd87f1#fcd87f1849af6ebbe35cc64062b9f37084a7c789"
+source = "git+https://github.com/powdr-labs/powdr.git?rev=1.4.1-gpu-wip#046a3911f6dfc1c59a0376db34c99b8f3610f83c"
 dependencies = [
  "openvm-custom-insn",
  "openvm-platform",
