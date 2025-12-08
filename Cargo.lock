@@ -783,16 +783,16 @@ checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
 
 [[package]]
 name = "openvm"
-version = "1.4.1"
-source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr#60073d7908e703ba585475a285f7a4c6eadd9853"
+version = "1.4.2-rc.1"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.3-powdr#3e315cb77e326cc2aca4cb6ff6f80cb1ced5a2ce"
 dependencies = [
  "bytemuck",
  "getrandom 0.2.8",
  "getrandom 0.3.3",
  "num-bigint",
- "openvm-custom-insn",
- "openvm-platform",
- "openvm-rv32im-guest",
+ "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?rev=v1.4.3-powdr)",
+ "openvm-platform 1.4.2-rc.1",
+ "openvm-rv32im-guest 1.4.2-rc.1",
  "serde",
 ]
 
@@ -807,13 +807,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "openvm-custom-insn"
+version = "0.1.0"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.3-powdr#3e315cb77e326cc2aca4cb6ff6f80cb1ced5a2ce"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
+]
+
+[[package]]
 name = "openvm-platform"
 version = "1.4.1"
 source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr#60073d7908e703ba585475a285f7a4c6eadd9853"
 dependencies = [
  "libm",
- "openvm-custom-insn",
- "openvm-rv32im-guest",
+ "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr)",
+ "openvm-rv32im-guest 1.4.1",
+]
+
+[[package]]
+name = "openvm-platform"
+version = "1.4.2-rc.1"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.3-powdr#3e315cb77e326cc2aca4cb6ff6f80cb1ced5a2ce"
+dependencies = [
+ "libm",
+ "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?rev=v1.4.3-powdr)",
+ "openvm-rv32im-guest 1.4.2-rc.1",
 ]
 
 [[package]]
@@ -821,7 +841,17 @@ name = "openvm-rv32im-guest"
 version = "1.4.1"
 source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr#60073d7908e703ba585475a285f7a4c6eadd9853"
 dependencies = [
- "openvm-custom-insn",
+ "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr)",
+ "p3-field",
+ "strum_macros 0.26.4",
+]
+
+[[package]]
+name = "openvm-rv32im-guest"
+version = "1.4.2-rc.1"
+source = "git+https://github.com/powdr-labs/openvm.git?rev=v1.4.3-powdr#3e315cb77e326cc2aca4cb6ff6f80cb1ced5a2ce"
+dependencies = [
+ "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?rev=v1.4.3-powdr)",
  "p3-field",
  "strum_macros 0.26.4",
 ]
@@ -994,9 +1024,9 @@ name = "powdr-openvm-hints-guest"
 version = "0.1.4"
 source = "git+https://github.com/powdr-labs/powdr.git?rev=1.4.1-gpu-wip#046a3911f6dfc1c59a0376db34c99b8f3610f83c"
 dependencies = [
- "openvm-custom-insn",
- "openvm-platform",
- "openvm-rv32im-guest",
+ "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?rev=v1.4.1-powdr)",
+ "openvm-platform 1.4.1",
+ "openvm-rv32im-guest 1.4.1",
  "strum_macros 0.27.2",
 ]
 
