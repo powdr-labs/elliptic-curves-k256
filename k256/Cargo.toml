@@ -30,8 +30,8 @@ sha2 = { version = "0.10", optional = true, default-features = false }
 signature = { version = "2", optional = true }
 
 [target.'cfg(target_os = "zkvm")'.dependencies]
-openvm = { git = "https://github.com/powdr-labs/openvm.git", rev = "v1.4.2-powdr" }
-powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev = "v1.4.2-powdr" }
+openvm = { git = "https://github.com/powdr-labs/openvm.git", branch = "skip-dummy-wip" }
+powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", branch = "direct-to-apc" }
 
 [dev-dependencies]
 blobby = "0.3"
