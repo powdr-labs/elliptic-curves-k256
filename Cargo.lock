@@ -647,7 +647,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "openvm",
- "powdr-openvm-hints-guest",
+ "powdr-openvm-riscv-hints-guest",
  "proptest",
  "rand_core",
  "serdect",
@@ -790,25 +790,15 @@ dependencies = [
  "getrandom 0.2.8",
  "getrandom 0.3.3",
  "num-bigint",
- "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4)",
- "openvm-platform 1.4.2 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4)",
- "openvm-rv32im-guest 1.4.2 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4)",
+ "openvm-custom-insn",
+ "openvm-platform",
+ "openvm-rv32im-guest",
  "serde",
 ]
 
 [[package]]
 name = "openvm-custom-insn"
 version = "0.1.0"
-source = "git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3#72e9013217849280eae803e960c70fd60a79a89d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.106",
-]
-
-[[package]]
-name = "openvm-custom-insn"
-version = "0.1.0"
 source = "git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4#2d6968558a435b3288ef656ca91074cb29e8c0e6"
 dependencies = [
  "proc-macro2",
@@ -819,31 +809,11 @@ dependencies = [
 [[package]]
 name = "openvm-platform"
 version = "1.4.2"
-source = "git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3#72e9013217849280eae803e960c70fd60a79a89d"
-dependencies = [
- "libm",
- "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3)",
- "openvm-rv32im-guest 1.4.2 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3)",
-]
-
-[[package]]
-name = "openvm-platform"
-version = "1.4.2"
 source = "git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4#2d6968558a435b3288ef656ca91074cb29e8c0e6"
 dependencies = [
  "libm",
- "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4)",
- "openvm-rv32im-guest 1.4.2 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4)",
-]
-
-[[package]]
-name = "openvm-rv32im-guest"
-version = "1.4.2"
-source = "git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3#72e9013217849280eae803e960c70fd60a79a89d"
-dependencies = [
- "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3)",
- "p3-field",
- "strum_macros 0.26.4",
+ "openvm-custom-insn",
+ "openvm-rv32im-guest",
 ]
 
 [[package]]
@@ -851,7 +821,7 @@ name = "openvm-rv32im-guest"
 version = "1.4.2"
 source = "git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4#2d6968558a435b3288ef656ca91074cb29e8c0e6"
 dependencies = [
- "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.4)",
+ "openvm-custom-insn",
  "p3-field",
  "strum_macros 0.26.4",
 ]
@@ -1020,13 +990,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7170ef9988bc169ba16dd36a7fa041e5c4cbeb6a35b76d4c03daded371eae7c0"
 
 [[package]]
-name = "powdr-openvm-hints-guest"
+name = "powdr-openvm-riscv-hints-guest"
 version = "0.1.4"
-source = "git+https://github.com/powdr-labs/powdr.git?rev=b56ed8b5e#b56ed8b5ee887bd827fed228b0efc28645422a24"
+source = "git+https://github.com/powdr-labs/powdr.git?rev=6f83a86#6f83a8623479b9b37658da081f7b2f504780804a"
 dependencies = [
- "openvm-custom-insn 0.1.0 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3)",
- "openvm-platform 1.4.2 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3)",
- "openvm-rv32im-guest 1.4.2 (git+https://github.com/powdr-labs/openvm.git?tag=v1.4.2-powdr-rc.3)",
+ "openvm-custom-insn",
+ "openvm-platform",
+ "openvm-rv32im-guest",
  "strum_macros 0.27.2",
 ]
 
