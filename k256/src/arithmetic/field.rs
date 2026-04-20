@@ -174,7 +174,7 @@ impl FieldElement {
         #[cfg(target_os = "zkvm")]
         {
             let repr = self.0 .0;
-            let inv_repr = powdr_openvm_hints_guest::hint_k256_inverse_field_10x26(repr);
+            let inv_repr = powdr_openvm_riscv_hints_guest::hint_k256_inverse_field_10x26(repr);
             let inv = Self(FieldElementImpl(inv_repr));
             let normalizes_to_zero = self.normalizes_to_zero();
             if !bool::from(normalizes_to_zero) {
@@ -230,7 +230,7 @@ impl FieldElement {
         #[cfg(target_os = "zkvm")]
         {
             let repr = self.0 .0;
-            let (has_sqrt, sqrt) = powdr_openvm_hints_guest::hint_k256_sqrt_field_10x26(repr);
+            let (has_sqrt, sqrt) = powdr_openvm_riscv_hints_guest::hint_k256_sqrt_field_10x26(repr);
             let sqrt = Self(FieldElementImpl(sqrt));
             if has_sqrt {
                 if (sqrt * sqrt).normalize() != self.normalize() {
@@ -245,7 +245,7 @@ impl FieldElement {
                 if (sqrt * sqrt).normalize()
                     != (*self
                         * Self(FieldElementImpl(
-                            powdr_openvm_hints_guest::K256_NON_QUADRATIC_RESIDUE,
+                            powdr_openvm_riscv_hints_guest::K256_NON_QUADRATIC_RESIDUE,
                         )))
                     .normalize()
                 {
