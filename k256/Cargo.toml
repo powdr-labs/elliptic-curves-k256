@@ -37,7 +37,7 @@ openvm = { git = "https://github.com/powdr-labs/openvm.git", branch = "v2-powdr-
 # - both reference openvm
 # When we upgrade openvm, the upgrade would have to be atomic in k256 and powdr, but that's not possible unless we have a monorepo.
 # Thus, this rev points to a commit in the powdr PR doing the ovm upgrade.
-powdr-openvm-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev = "59d625951" }
+powdr-openvm-riscv-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev = "59d625951" }
 
 [dev-dependencies]
 blobby = "0.3"
