@@ -30,7 +30,7 @@ sha2 = { version = "0.10", optional = true, default-features = false }
 signature = { version = "2", optional = true }
 
 [target.'cfg(target_os = "zkvm")'.dependencies]
-openvm = { git = "https://github.com/powdr-labs/openvm.git", tag = "v2.0.0-beta.2-powdr" }
+openvm = { git = "https://github.com/powdr-labs/openvm.git", tag = "v2.0.0-beta.2-powdr.1" }
 # Currently we have a circular dependency with the powdr repo:
 # - the k256 lib references the `hints-guest` crate in the powdr repo
 # - the powdr repo has a couple guest binaries that reference the k256 lib
