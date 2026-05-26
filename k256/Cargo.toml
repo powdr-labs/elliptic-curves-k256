@@ -30,14 +30,14 @@ sha2 = { version = "0.10", optional = true, default-features = false }
 signature = { version = "2", optional = true }
 
 [target.'cfg(target_os = "zkvm")'.dependencies]
-openvm = { git = "https://github.com/powdr-labs/openvm.git", tag = "v2.0.0-beta.2-powdr" }
+openvm = { git = "https://github.com/powdr-labs/openvm.git", tag = "v2.0.0-beta.2-powdr.1" }
 # Currently we have a circular dependency with the powdr repo:
 # - the k256 lib references the `hints-guest` crate in the powdr repo
 # - the powdr repo has a couple guest binaries that reference the k256 lib
 # - both reference openvm
 # When we upgrade openvm, the upgrade would have to be atomic in k256 and powdr, but that's not possible unless we have a monorepo.
 # Thus, this rev points to a commit in the powdr PR doing the ovm upgrade.
-powdr-openvm-riscv-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev = "6b2a158f7" }
+powdr-openvm-riscv-hints-guest = { git = "https://github.com/powdr-labs/powdr.git", rev = "b418d1557" }
 
 [dev-dependencies]
 blobby = "0.3"
